@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HerramientasLibres - Versión Beta</title>
+    <title>HerramientasLibres - Gestión Comercial</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -21,7 +21,6 @@
             --border-color: #e5e7eb;
             --input-bg: #ffffff;
             --nav-bg: #ffffff;
-            --item-hover: #f3f4f6;
         }
 
         /* Tema Oscuro */
@@ -33,7 +32,6 @@
             --border-color: #374151;
             --input-bg: #2d2d2d;
             --nav-bg: #1e1e1e;
-            --item-hover: #2d2d2d;
         }
 
         body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); transition: background-color 0.3s, color 0.3s; }
@@ -97,7 +95,7 @@
                     <i data-lucide="wrench" class="text-black w-8 h-8"></i>
                 </div>
                 <h1 class="text-2xl font-bold uppercase tracking-widest text-center">Herramientas<span class="accent-color">Libres</span></h1>
-                <p class="text-xs opacity-60 mt-2">Versión Beta - Gestión Comercial</p>
+                <p class="text-xs opacity-60 mt-2">Gestión Comercial - Versión Beta</p>
             </div>
             <form id="login-form" class="space-y-4">
                 <div>
@@ -122,7 +120,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
                 <div class="flex items-center gap-2">
-                    <div class="p-1.5 bg-accent rounded-lg">
+                    <div class="p-1.5 bg-accent rounded-lg shadow-sm">
                         <i data-lucide="wrench" class="text-black w-5 h-5"></i>
                     </div>
                     <span class="text-lg font-bold tracking-tight">HerramientasLibres</span>
@@ -166,7 +164,7 @@
                 <h2 class="text-2xl font-bold">Inventario</h2>
                 <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
                     <div class="relative flex-1 min-w-[200px] md:w-64">
-                        <input type="text" id="stock-search" placeholder="Buscar herramienta..." class="w-full p-2 rounded text-sm outline-none pl-8 shadow-sm" oninput="window.renderStock()">
+                        <input type="text" id="stock-search" placeholder="Buscar por herramienta o proveedor..." class="w-full p-2 rounded text-sm outline-none pl-8 shadow-sm" oninput="window.renderStock()">
                         <i data-lucide="search" class="absolute left-2 top-2.5 w-4 h-4 text-gray-400"></i>
                     </div>
                     <div class="flex gap-2">
@@ -220,7 +218,7 @@
                 <div class="lg:col-span-2">
                     <div class="bg-card p-6 rounded-xl border border-gray-800 mb-6 shadow-sm">
                         <div class="relative">
-                            <input type="text" id="search-product" placeholder="Buscar por nombre, marca, modelo, código o proveedor..." class="w-full p-4 rounded-xl outline-none pl-12 text-lg shadow-sm">
+                            <input type="text" id="search-product" placeholder="Herramienta, modelo, código o proveedor..." class="w-full p-4 rounded-xl outline-none pl-12 text-lg shadow-sm">
                             <i data-lucide="search" class="absolute left-4 top-5 text-gray-400"></i>
                         </div>
                         <div id="search-results" class="mt-4 space-y-2"></div>
@@ -242,18 +240,18 @@
                         <div class="grid grid-cols-1 gap-3">
                             <div>
                                 <label class="block text-[10px] opacity-60 uppercase font-bold">Cliente (Busca o Registra)</label>
-                                <input type="text" id="sale-customer-search" placeholder="Escribe nombre para buscar..." class="w-full p-2 text-sm rounded outline-none" oninput="window.suggestCustomers(this.value)">
+                                <input type="text" id="sale-customer-search" placeholder="Nombre para buscar..." class="w-full p-2 text-sm rounded outline-none shadow-sm" oninput="suggestCustomers(this.value)">
                                 <div id="customer-suggestions" class="rounded mt-1 hidden max-h-40 overflow-y-auto border border-gray-700 z-[60] shadow-2xl"></div>
                             </div>
                             <div id="new-customer-fields" class="space-y-2 hidden border-l-2 border-amber-500 pl-3 pt-2 bg-black/5 p-2 rounded">
-                                <p class="text-[10px] text-amber-600 font-bold uppercase italic">Registrar Nuevo Cliente:</p>
+                                <p class="text-[10px] text-amber-600 font-bold uppercase italic">Nuevo Registro:</p>
                                 <div class="grid grid-cols-2 gap-2">
-                                    <input type="text" id="c-name" placeholder="Nombre" class="w-full p-2 text-xs rounded outline-none">
-                                    <input type="text" id="c-surname" placeholder="Apellido" class="w-full p-2 text-xs rounded outline-none">
+                                    <input type="text" id="c-name" placeholder="Nombre" class="w-full p-2 text-xs rounded outline-none shadow-sm">
+                                    <input type="text" id="c-surname" placeholder="Apellido" class="w-full p-2 text-xs rounded outline-none shadow-sm">
                                 </div>
                                 <div class="grid grid-cols-2 gap-2">
-                                    <input type="text" id="c-phone" placeholder="WhatsApp/Tel" class="w-full p-2 text-xs rounded outline-none">
-                                    <input type="email" id="c-email" placeholder="Email" class="w-full p-2 text-xs rounded outline-none">
+                                    <input type="text" id="c-phone" placeholder="WhatsApp" class="w-full p-2 text-xs rounded outline-none shadow-sm">
+                                    <input type="email" id="c-email" placeholder="Email" class="w-full p-2 text-xs rounded outline-none shadow-sm">
                                 </div>
                             </div>
                         </div>
@@ -272,7 +270,7 @@
                 <h2 class="text-2xl font-bold">Base de Clientes</h2>
                 <div class="relative w-64">
                     <input type="text" id="filter-clients" placeholder="Buscar cliente..." class="w-full p-2 rounded text-sm outline-none pl-8 shadow-sm" oninput="window.renderCustomers()">
-                    <i data-lucide="search" class="absolute left-2 top-2.5 w-4 h-4 text-gray-500"></i>
+                    <i data-lucide="search" class="absolute left-2 top-2.5 w-4 h-4 text-gray-400"></i>
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="customer-list"></div>
@@ -284,8 +282,8 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-card p-4 rounded-xl border border-gray-800 shadow-sm">
                 <input type="date" id="hist-from" class="w-full p-2 rounded text-sm" onchange="window.filterHistory()">
                 <input type="date" id="hist-to" class="w-full p-2 rounded text-sm" onchange="window.filterHistory()">
-                <input type="text" id="hist-search" placeholder="Buscar herramienta o cliente..." class="w-full p-2 rounded text-sm" oninput="window.filterHistory()">
-                <select id="hist-type" class="w-full p-2 rounded text-sm" onchange="window.filterHistory()">
+                <input type="text" id="hist-search" placeholder="Herramienta, cliente o proveedor..." class="w-full p-2 rounded text-sm shadow-sm" oninput="window.filterHistory()">
+                <select id="hist-type" class="w-full p-2 rounded text-sm shadow-sm" onchange="window.filterHistory()">
                     <option value="">Todos los tipos</option>
                     <option value="presencial">Presencial</option>
                     <option value="online">Online</option>
@@ -378,7 +376,46 @@
         </div>
     </div>
 
-    <!-- OTROS MODALES -->
+    <!-- MODAL PROVEEDOR -->
+    <div id="modal-supplier" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
+        <div class="bg-card w-full max-w-lg rounded-2xl border border-gray-700 overflow-hidden shadow-2xl">
+            <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-black/5"><h3 class="text-xl font-bold">Proveedor</h3><button onclick="closeModal('modal-supplier')"><i data-lucide="x"></i></button></div>
+            <form id="form-supplier" class="p-6 space-y-4">
+                <input type="hidden" id="s-id">
+                <div><label class="text-xs opacity-60">Razón Social</label><input type="text" id="s-name" required class="w-full p-2 rounded outline-none shadow-sm"></div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="text-xs opacity-60">WhatsApp</label><input type="text" id="s-whatsapp" class="w-full p-2 rounded outline-none shadow-sm"></div>
+                    <div><label class="text-xs opacity-60">Teléfono</label><input type="text" id="s-phone" class="w-full p-2 rounded outline-none shadow-sm"></div>
+                </div>
+                <div><label class="text-xs opacity-60">Email</label><input type="email" id="s-email" class="w-full p-2 rounded outline-none shadow-sm"></div>
+                <div><label class="text-xs opacity-60">Domicilio</label><input type="text" id="s-address" class="w-full p-2 rounded outline-none shadow-sm"></div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="text-xs opacity-60">Ciudad</label><input type="text" id="s-city" class="w-full p-2 rounded outline-none shadow-sm"></div>
+                    <div><label class="text-xs opacity-60">País</label><input type="text" id="s-country" value="Argentina" class="w-full p-2 rounded outline-none shadow-sm"></div>
+                </div>
+                <div class="flex gap-2 pt-4"><button type="submit" class="btn-primary flex-1 py-3 rounded-lg shadow-md">Guardar</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL CLIENTE -->
+    <div id="modal-client" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
+        <div class="bg-card w-full max-w-lg rounded-2xl border border-gray-700 overflow-hidden shadow-2xl">
+            <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-black/5"><h3 class="text-xl font-bold">Editar Cliente</h3><button onclick="closeModal('modal-client')"><i data-lucide="x"></i></button></div>
+            <form id="form-client" class="p-6 space-y-4">
+                <input type="hidden" id="edit-c-id">
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="text-xs opacity-60">Nombre</label><input type="text" id="edit-c-name" required class="w-full p-2 rounded outline-none shadow-sm"></div>
+                    <div><label class="text-xs opacity-60">Apellido</label><input type="text" id="edit-c-surname" required class="w-full p-2 rounded outline-none shadow-sm"></div>
+                </div>
+                <div><label class="text-xs opacity-60">WhatsApp/Tel</label><input type="text" id="edit-c-phone" class="w-full p-2 rounded outline-none shadow-sm"></div>
+                <div><label class="text-xs opacity-60">Email</label><input type="email" id="edit-c-email" class="w-full p-2 rounded outline-none shadow-sm"></div>
+                <div class="flex gap-2 pt-4"><button type="submit" class="btn-primary flex-1 py-3 rounded-lg shadow-md">Guardar Cambios</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL HISTORIAL CLIENTE -->
     <div id="modal-client-history" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
         <div class="bg-card w-full max-w-2xl rounded-2xl border border-gray-700 overflow-hidden shadow-2xl">
             <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-black/5">
@@ -389,14 +426,35 @@
         </div>
     </div>
 
-    <div id="image-viewer" class="fixed inset-0 bg-black/95 z-[10000] hidden items-center justify-center p-4" onclick="window.closeImageViewer()">
-        <div class="relative max-w-4xl max-h-screen">
-            <button class="absolute -top-12 right-0 text-white hover:text-accent-color"><i data-lucide="x" class="w-10 h-10"></i></button>
-            <img id="enlarged-image" src="" class="max-w-full max-h-[85vh] rounded-lg shadow-2xl border border-gray-600 bg-white/5">
+    <!-- MODAL POST-VENTA -->
+    <div id="modal-success-sale" class="fixed inset-0 bg-black/90 z-[1000] hidden items-center justify-center p-4">
+        <div class="bg-card p-8 rounded-2xl border border-gray-800 w-full max-w-md shadow-2xl text-center">
+            <div class="p-4 bg-green-500/10 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="check-circle" class="text-green-600 w-12 h-12"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2 text-adaptive">¡Venta Exitosa!</h2>
+            <p class="text-xs opacity-60 mb-8 text-adaptive">El registro se ha guardado correctamente.</p>
+            <div class="flex flex-col gap-3">
+                <button id="btn-download-pdf" class="btn-primary py-4 rounded-xl flex items-center justify-center gap-2 shadow-md">
+                    <i data-lucide="download"></i> Descargar Factura PDF
+                </button>
+                <button id="btn-share-pdf" class="bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-md">
+                    <i data-lucide="share-2"></i> Compartir Factura
+                </button>
+                <button onclick="closeModal('modal-success-sale')" class="text-gray-500 hover:text-adaptive pt-4 text-sm font-medium transition-colors">
+                    Volver a Ventas
+                </button>
+            </div>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-28 md:bottom-12 right-8 bg-accent text-black px-6 py-3 rounded-full shadow-2xl font-bold opacity-0 transition-all z-[200]"></div>
+    <!-- VISOR IMAGENES -->
+    <div id="image-viewer" class="fixed inset-0 bg-black/95 z-[10000] hidden items-center justify-center p-4" onclick="window.closeImageViewer()">
+        <div class="relative max-w-4xl max-h-screen">
+            <button class="absolute -top-12 right-0 text-white hover:text-accent-color transition-colors"><i data-lucide="x" class="w-10 h-10"></i></button>
+            <img id="enlarged-image" src="" class="max-w-full max-h-[85vh] rounded-lg shadow-2xl border border-gray-600 bg-white/5">
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
@@ -420,7 +478,7 @@
 
         const fmt = (n) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
 
-        // --- ASIGNACIONES GLOBALES (WINDOW) ---
+        // --- EXPOSICIÓN GLOBAL (CRÍTICO PARA MÓDULOS) ---
         window.toggleTheme = () => {
             const isDark = document.body.classList.toggle('dark-mode');
             const icon = document.getElementById('theme-icon');
@@ -434,22 +492,9 @@
         window.setSaleType = (t) => { 
             saleType = t; 
             const bP = document.getElementById('btn-presencial'); const bO = document.getElementById('btn-online'); 
-            if(bP) bP.className = t === 'presencial' ? 'py-2 rounded border border-amber-500 bg-amber-500/10 text-amber-600 font-bold text-xs shadow-inner' : 'py-2 rounded border border-gray-700 text-adaptive text-xs';
+            if(bP) bP.className = t === 'presencial' ? 'py-2 rounded border border-amber-500 bg-amber-500/10 text-amber-600 font-bold text-xs shadow-inner' : 'py-2 rounded border border-gray-300 text-adaptive text-xs';
             if(bO) bO.className = t === 'online' ? 'py-2 rounded border border-amber-500 bg-amber-500/10 text-amber-600 font-bold text-xs shadow-inner' : 'py-2 rounded border border-gray-700 text-adaptive text-xs';
         };
-
-        window.suggestCustomers = (term) => {
-            const sug = document.getElementById('customer-suggestions'); const fields = document.getElementById('new-customer-fields');
-            selectedCustomerId = null; fields.classList.add('hidden');
-            if(!term) { sug.classList.add('hidden'); return; }
-            const matches = customers.filter(c => (c.name && c.name.toLowerCase().includes(term.toLowerCase())) || (c.surname && c.surname.toLowerCase().includes(term.toLowerCase())) || (c.phone && c.phone.includes(term)));
-            let html = matches.map(c => `<div onclick="window.selectCustomer('${c.id}', '${c.name}', '${c.surname || ''}')" class="p-3 hover:bg-black/5 cursor-pointer text-xs border-b border-gray-200 dark:border-gray-700 font-bold text-adaptive">${c.name} ${c.surname || ''} (${c.phone || 'S/T'})</div>`).join('');
-            html += `<div onclick="window.showNewCustomerFields('${term}')" class="p-3 hover:bg-green-600 hover:text-white cursor-pointer text-xs font-bold text-green-600 italic">+ Registrar "${term}" como nuevo</div>`;
-            sug.innerHTML = html; sug.classList.remove('hidden');
-        };
-
-        window.showNewCustomerFields = (term) => { selectedCustomerId = null; document.getElementById('customer-suggestions').classList.add('hidden'); document.getElementById('new-customer-fields').classList.remove('hidden'); const nameInp = document.getElementById('c-name'); if(nameInp) nameInp.value = term; };
-        window.selectCustomer = (id, name, surname) => { selectedCustomerId = id; document.getElementById('sale-customer-search').value = `${name} ${surname}`; document.getElementById('customer-suggestions').classList.add('hidden'); document.getElementById('new-customer-fields').classList.add('hidden'); };
 
         window.addToCartById = (id) => {
             const p = products.find(x => x.id === id); if(!p) return;
@@ -460,6 +505,55 @@
             const sRes = document.getElementById('search-results'); if(sRes) sRes.innerHTML = '';
             window.renderCart();
         };
+
+        window.editProductById = (id) => {
+            const p = products.find(x => x.id === id); if(!p) return;
+            const f = { 'p-id': p.id, 'p-name': p.name, 'p-brand': p.brand, 'p-model': p.model, 'p-code': p.code, 'p-supplier': p.supplierId, 'p-stock': p.stock, 'p-cost': p.cost, 'p-price': p.price, 'p-image-data': p.image };
+            Object.keys(f).forEach(k => { const el = document.getElementById(k); if(el) el.value = f[k] || ''; });
+            const pc = document.getElementById('image-preview-container'); if(pc) pc.innerHTML = p.image ? `<img src="${p.image}" class="w-full h-full object-cover">` : '';
+            window.openModal('modal-product');
+        };
+
+        window.editSupplier = (s) => {
+            const f = { 's-id': s.id, 's-name': s.name, 's-whatsapp': s.whatsapp, 's-phone': s.phone, 's-email': s.email, 's-address': s.address, 's-city': s.city, 's-country': s.country };
+            Object.keys(f).forEach(k => { const el = document.getElementById(k); if(el) el.value = f[k] || ''; });
+            window.openModal('modal-supplier');
+        };
+
+        window.deleteSupplier = async (id) => { if(confirm("¿Seguro que desea eliminar este proveedor?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id)); };
+        window.deleteProduct = async (id) => { if(confirm("¿Eliminar herramienta?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id)); };
+        window.deleteExpense = async (id) => { if(confirm("¿Eliminar registro?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id)); };
+        window.editExpense = (e) => { document.getElementById('e-id').value = e.id; document.getElementById('e-concept').value = e.concept; document.getElementById('e-category').value = e.category; document.getElementById('e-amount').value = e.amount; window.openModal('modal-expense'); };
+
+        window.suggestCustomers = (term) => {
+            const sug = document.getElementById('customer-suggestions'); const fields = document.getElementById('new-customer-fields');
+            selectedCustomerId = null; fields.classList.add('hidden');
+            if(!term) { sug.classList.add('hidden'); return; }
+            const matches = customers.filter(c => (c.name && c.name.toLowerCase().includes(term.toLowerCase())) || (c.surname && c.surname.toLowerCase().includes(term.toLowerCase())) || (c.phone && c.phone.includes(term)));
+            let html = matches.map(c => `<div onclick="window.selectCustomer('${c.id}', '${c.name}', '${c.surname || ''}')" class="p-3 hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer text-xs border-b border-gray-200 dark:border-gray-800 font-bold text-adaptive">${c.name} ${c.surname || ''} (${c.phone || 'S/T'})</div>`).join('');
+            html += `<div onclick="window.showNewCustomerFields('${term}')" class="p-3 hover:bg-green-600 hover:text-white cursor-pointer text-xs font-bold text-green-600 italic">+ Registrar "${term}" como nuevo</div>`;
+            sug.innerHTML = html; sug.classList.remove('hidden');
+        };
+
+        window.showNewCustomerFields = (term) => { selectedCustomerId = null; document.getElementById('customer-suggestions').classList.add('hidden'); document.getElementById('new-customer-fields').classList.remove('hidden'); const nameInp = document.getElementById('c-name'); if(nameInp) nameInp.value = term; };
+        window.selectCustomer = (id, name, surname) => { selectedCustomerId = id; document.getElementById('sale-customer-search').value = `${name} ${surname}`; document.getElementById('customer-suggestions').classList.add('hidden'); document.getElementById('new-customer-fields').classList.add('hidden'); };
+
+        window.viewClientHistory = (id, name) => {
+            const cs = historyRaw.filter(h => h.customerId === id);
+            document.getElementById('client-history-name').innerText = `Historial: ${name}`;
+            document.getElementById('client-history-content').innerHTML = cs.length ? cs.map(h => `<div class="mb-4 p-4 bg-black/5 rounded border border-gray-200 dark:border-gray-800"><div class="flex justify-between text-xs mb-1"><span class="opacity-60">${h.date?.toDate ? h.date.toDate().toLocaleDateString() : 'Reciente'}</span><span class="font-bold uppercase text-amber-500">${h.saleMode}</span></div><p class="text-sm text-adaptive">${h.detail}</p><p class="text-right font-bold mt-2 text-amber-600">${fmt(h.amount)}</p></div>`).join('') : '<p class="text-center italic opacity-40 text-adaptive p-10">Sin compras registradas</p>';
+            window.openModal('modal-client-history');
+        };
+
+        window.showToast = (m) => { const t = document.getElementById('toast'); if(t){ t.innerText = m; t.classList.remove('opacity-0'); t.style.transform = 'translateY(-10px)'; setTimeout(() => { t.classList.add('opacity-0'); t.style.transform = 'translateY(0px)'; }, 3000); } };
+        window.switchTab = (id) => { document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden')); const target = document.getElementById(`sec-${id}`); if (target) target.classList.remove('hidden'); document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('tab-active')); const tabBtn = document.getElementById(`tab-${id}`); if(tabBtn) tabBtn.classList.add('tab-active'); lucide.createIcons(); };
+        window.openModal = (id) => { const el = document.getElementById(id); if (el) { el.classList.remove('hidden'); el.classList.add('flex'); lucide.createIcons(); } };
+        window.closeModal = (id) => { const el = document.getElementById(id); if (el) { el.classList.add('hidden'); el.classList.remove('flex'); } };
+        window.prepareNew = (id) => { const el = document.getElementById(id); if (el) { const form = el.querySelector('form'); if(form) form.reset(); const hid = el.querySelector('input[type="hidden"]'); if(hid) hid.value = ''; const pc = document.getElementById('image-preview-container'); if (pc && id === 'modal-product') pc.innerHTML = ''; window.openModal(id); } };
+        window.viewLargeImage = (src) => { const v = document.getElementById('image-viewer'); const i = document.getElementById('enlarged-image'); if(v && i && src) { i.src = src; v.classList.remove('hidden'); v.classList.add('flex'); lucide.createIcons(); } };
+        window.closeImageViewer = () => { const v = document.getElementById('image-viewer'); if(v) { v.classList.add('hidden'); v.classList.remove('flex'); } };
+        window.removeFromCart = (id) => { cart = cart.filter(i => i.id !== id); window.renderCart(); };
+        window.signOutUser = () => { if(confirm("¿Cerrar sesión?")) signOut(auth); };
 
         window.handleImageUpload = (e) => { 
             const f = e.target.files[0]; if(!f) return; 
@@ -477,51 +571,28 @@
             r.readAsDataURL(f); 
         };
 
-        window.editProductById = (id) => {
-            const p = products.find(x => x.id === id); if(!p) return;
-            const f = { 'p-id': p.id, 'p-name': p.name, 'p-brand': p.brand, 'p-model': p.model, 'p-code': p.code, 'p-supplier': p.supplierId, 'p-stock': p.stock, 'p-cost': p.cost, 'p-price': p.price, 'p-image-data': p.image };
-            Object.keys(f).forEach(k => { const el = document.getElementById(k); if(el) el.value = f[k] || ''; });
-            const pc = document.getElementById('image-preview-container'); if(pc) pc.innerHTML = p.image ? `<img src="${p.image}" class="w-full h-full object-cover">` : '';
-            window.openModal('modal-product');
+        window.exportStock = (onlyFiltered) => {
+            const sVal = document.getElementById('stock-search').value.toLowerCase();
+            let d = onlyFiltered ? products.filter(p => (p.name && p.name.toLowerCase().includes(sVal)) || (p.brand && p.brand.toLowerCase().includes(sVal)) || (p.model && p.model.toLowerCase().includes(sVal)) || (suppliers.find(s => s.id === p.supplierId)?.name.toLowerCase().includes(sVal))) : products;
+            if(!d.length) return window.showToast("Sin datos para exportar");
+            let csv = "\uFEFFNombre,Marca,Modelo,Codigo,Proveedor,Stock,Costo,Precio Final\n";
+            d.forEach(p => {
+                const sName = suppliers.find(s => s.id === p.supplierId)?.name || 'S/P';
+                csv += `"${p.name || ''}","${p.brand || ''}","${p.model || ''}","${p.code || ''}","${sName}",${p.stock || 0},${p.cost || 0},${p.price || 0}\n`;
+            });
+            const b = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+            const u = URL.createObjectURL(b);
+            const a = document.createElement('a'); a.href = u; a.download = `Stock_${new Date().toLocaleDateString()}.csv`; a.click();
         };
 
-        window.switchTab = (id) => { document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden')); const target = document.getElementById(`sec-${id}`); if (target) target.classList.remove('hidden'); document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('tab-active')); const tabBtn = document.getElementById(`tab-${id}`); if(tabBtn) tabBtn.classList.add('tab-active'); lucide.createIcons(); };
-        window.openModal = (id) => { const el = document.getElementById(id); if (el) { el.classList.remove('hidden'); el.classList.add('flex'); lucide.createIcons(); } };
-        window.closeModal = (id) => { const el = document.getElementById(id); if (el) { el.classList.add('hidden'); el.classList.remove('flex'); } };
-        window.showToast = (m) => { const t = document.getElementById('toast'); if(t){ t.innerText = m; t.classList.remove('opacity-0'); setTimeout(() => t.classList.add('opacity-0'), 3000); } };
+        window.handleInvoiceDownload = () => { if(currentInvoiceData) window.generateInvoice(currentInvoiceData.items, currentInvoiceData.total, currentInvoiceData.customer, true); };
+        window.handleInvoiceShare = async () => { if(!currentInvoiceData) return; const pdfBlob = window.generateInvoice(currentInvoiceData.items, currentInvoiceData.total, currentInvoiceData.customer, false); if (navigator.share) { const file = new File([pdfBlob], `Factura_${currentInvoiceData.customer.replace(/\s+/g, '_')}.pdf`, { type: 'application/pdf' }); try { await navigator.share({ files: [file], title: 'Comprobante HL' }); } catch (err) {} } else { window.showToast("Compartir no disponible"); } };
 
-        window.processSale = async () => {
-            if(!db || !auth.currentUser) return window.showToast("Sin conexión");
-            if(cart.length === 0) return window.showToast("Carrito vacío");
-            const searchVal = document.getElementById('sale-customer-search').value.trim();
-            if(!searchVal && !selectedCustomerId) return window.showToast("Identifique al cliente");
-            try {
-                let cId = selectedCustomerId; let cFull = searchVal;
-                if(!cId) {
-                    const fn = document.getElementById('c-name').value.trim(); const ln = document.getElementById('c-surname').value.trim();
-                    if(!fn || !ln) return window.showToast("Nombre y Apellido requeridos");
-                    const newC = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'customers'), { name: fn, surname: ln, phone: document.getElementById('c-phone').value, email: document.getElementById('c-email').value, createdAt: serverTimestamp() });
-                    cId = newC.id; cFull = `${fn} ${ln}`;
-                }
-                for(const it of cart) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', it.id), { stock: increment(-it.qty) }); }
-                const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-                const sData = { type: 'venta', saleMode: saleType, customerId: cId, customerName: cFull, detail: cart.map(i => `${i.qty}x ${i.name} [${i.brand}]`).join(', '), amount: total, items: [...cart], date: serverTimestamp() };
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'history'), sData);
-                currentInvoiceData = { items: [...cart], total: total, customer: cFull };
-                cart = []; window.renderCart();
-                document.getElementById('sale-customer-search').value = ''; document.getElementById('new-customer-fields').classList.add('hidden');
-                window.openModal('modal-success-sale');
-            } catch(e) { window.showToast("Error al procesar la venta"); }
-        };
-
-        // --- LÓGICA DE INICIO ---
+        // --- LÓGICA DE DATOS ---
         const startApp = async () => {
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
-
-            const acMonth = document.getElementById('accounting-month');
-            if(acMonth) acMonth.value = new Date().toISOString().slice(0, 7);
 
             onAuthStateChanged(auth, (user) => {
                 const overlay = document.getElementById('login-overlay');
@@ -529,59 +600,16 @@
                     if(overlay) overlay.classList.add('hidden');
                     document.getElementById('auth-status').innerText = 'En Línea';
                     initListeners();
-                    switchTab('stock');
                 } else {
                     if(overlay) overlay.classList.remove('hidden');
                 }
             });
 
-            const loginForm = document.getElementById('login-form');
-            if (loginForm) {
-                loginForm.onsubmit = async (e) => {
-                    e.preventDefault();
-                    try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } 
-                    catch (err) { const errEl = document.getElementById('login-error'); if(errEl) { errEl.innerText = "Credenciales inválidas."; errEl.classList.remove('hidden'); } }
-                };
-            }
-
-            const sInp = document.getElementById('search-product');
-            if (sInp) {
-                sInp.addEventListener('input', () => {
-                    const t = sInp.value.toLowerCase();
-                    const r = document.getElementById('search-results');
-                    if(!t) { r.innerHTML = ''; return; }
-                    const f = products.filter(p => 
-                        (p.name && p.name.toLowerCase().includes(t)) || 
-                        (p.brand && p.brand.toLowerCase().includes(t)) || 
-                        (p.model && p.model.toLowerCase().includes(t)) ||
-                        (p.code && p.code.toLowerCase().includes(t)) ||
-                        (suppliers.find(s => s.id === p.supplierId)?.name.toLowerCase().includes(t))
-                    );
-                    r.innerHTML = f.slice(0,5).map(p => {
-                        const sName = suppliers.find(s => s.id === p.supplierId)?.name || 'S/P';
-                        return `
-                        <div onclick="window.addToCartById('${p.id}')" class="flex items-center justify-between p-4 bg-card hover:bg-accent/10 rounded-xl cursor-pointer border border-transparent hover:border-accent/20 transition-all shadow-sm">
-                            <div class="flex items-center gap-4">
-                                <img src="${p.image || ''}" class="w-12 h-12 rounded-lg object-cover bg-black/5" onerror="this.src='https://via.placeholder.com/40'">
-                                <div>
-                                    <p class="font-bold text-sm text-adaptive">${p.name}</p>
-                                    <p class="text-[10px] opacity-60 uppercase">${p.brand || 'S/M'} - ${p.model || 'S/M'}</p>
-                                    <p class="text-[9px] text-amber-600 font-bold uppercase">${sName}</p>
-                                </div>
-                            </div>
-                            <p class="font-bold accent-color text-base">${fmt(p.price)}</p>
-                        </div>`;
-                    }).join('');
-                });
-            }
-
-            const forms = [
-                {id: 'form-product', fn: handleProductSubmit},
-                {id: 'form-supplier', fn: handleSupplierSubmit},
-                {id: 'form-expense', fn: handleExpenseSubmit},
-                {id: 'form-client', fn: handleClientEditSubmit}
-            ];
-            forms.forEach(f => { const el = document.getElementById(f.id); if(el) el.onsubmit = f.fn; });
+            document.getElementById('login-form').onsubmit = async (e) => {
+                e.preventDefault();
+                try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } 
+                catch (err) { const errEl = document.getElementById('login-error'); if(errEl) { errEl.innerText = "Error: Acceso denegado."; errEl.classList.remove('hidden'); } }
+            };
 
             window.setSaleType('presencial');
             lucide.createIcons();
@@ -589,45 +617,41 @@
 
         function initListeners() {
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), sn => { products = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderStock(); window.updateDatalists(); });
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), sn => { suppliers = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderSuppliers(); window.updateSupplierSelect(); });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), sn => { suppliers = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderSuppliers(); window.renderStock(); window.updateSupplierSelect(); });
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'history'), sn => { historyRaw = sn.docs.map(d => ({id:d.id, ...d.data()})); window.filterHistory(); window.calculateStats(); });
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'customers'), sn => { customers = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderCustomers(); });
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), sn => { expenses = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderExpenses(); window.calculateStats(); });
         }
 
-        window.renderStock = () => {
-            const sl = document.getElementById('stock-list'); if(!sl) return;
-            const sVal = document.getElementById('stock-search').value.toLowerCase();
-            let f = sVal ? products.filter(p => (p.name && p.name.toLowerCase().includes(sVal)) || (p.brand && p.brand.toLowerCase().includes(sVal)) || (p.code && p.code.toLowerCase().includes(sVal))) : [...products].sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 20);
-            sl.innerHTML = f.map(p => {
-                const sName = suppliers.find(s => s.id === p.supplierId)?.name || 'S/P';
-                return `<tr class="border-b border-gray-800 hover:bg-black/5 transition-colors">
-                    <td class="p-4"><img src="${p.image || ''}" onclick="window.viewLargeImage('${p.image}')" class="w-10 h-10 object-cover rounded bg-black/10 cursor-zoom-in shadow-inner" onerror="this.src='https://via.placeholder.com/40'"></td>
-                    <td class="p-4 font-medium text-adaptive">${p.name}</td>
-                    <td class="p-4 text-xs uppercase opacity-60">${p.brand || 'S/M'}</td>
-                    <td class="p-4 text-xs uppercase opacity-60">${p.model || 'S/M'}</td>
-                    <td class="p-4 text-xs font-bold text-amber-600 uppercase">${sName}</td>
-                    <td class="p-4 font-bold text-xs ${p.stock < 5 ? 'text-red-500' : 'text-green-600'}">${p.stock} UN</td>
-                    <td class="p-4 font-bold text-sm accent-color">${fmt(p.price)}</td>
-                    <td class="p-4 flex gap-2">
-                        <button onclick='window.editProductById("${p.id}")' class="opacity-60 hover:opacity-100 hover:text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                        <button onclick="window.deleteProduct('${p.id}')" class="opacity-60 hover:opacity-100 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </td>
-                </tr>`;
-            }).join('');
-            lucide.createIcons();
+        async function handleProductSubmit(e) { e.preventDefault(); const id = document.getElementById('p-id').value; const data = { name: document.getElementById('p-name').value, brand: document.getElementById('p-brand').value, model: document.getElementById('p-model').value, code: document.getElementById('p-code').value, supplierId: document.getElementById('p-supplier').value, stock: parseInt(document.getElementById('p-stock').value), cost: parseFloat(document.getElementById('p-cost').value), price: parseFloat(document.getElementById('p-price').value), image: document.getElementById('p-image-data').value, updatedAt: serverTimestamp() }; if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), data); else { data.createdAt = serverTimestamp(); await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), data); } closeModal('modal-product'); window.showToast("Herramienta guardada"); }
+        async function handleSupplierSubmit(e) { e.preventDefault(); const id = document.getElementById('s-id').value; const data = { name: document.getElementById('s-name').value, whatsapp: document.getElementById('s-whatsapp').value, phone: document.getElementById('s-phone').value, email: document.getElementById('s-email').value, address: document.getElementById('s-address').value, city: document.getElementById('s-city').value, country: document.getElementById('s-country').value, updatedAt: serverTimestamp() }; if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id), data); else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), { ...data, createdAt: serverTimestamp() }); closeModal('modal-supplier'); window.showToast("Proveedor guardado"); }
+        async function handleExpenseSubmit(e) { e.preventDefault(); const id = document.getElementById('e-id').value; const data = { concept: document.getElementById('e-concept').value, category: document.getElementById('e-category').value, amount: parseFloat(document.getElementById('e-amount').value), date: serverTimestamp() }; if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id), data); else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), data); closeModal('modal-expense'); window.showToast("Egreso registrado"); }
+
+        window.renderCart = () => { const c = document.getElementById('cart-items'); if(!c) return; if(cart.length === 0) c.innerHTML = '<div class="opacity-40 text-center py-8 italic text-xs uppercase tracking-widest text-adaptive">Carrito vacío</div>'; else c.innerHTML = cart.map(i => `<div class="flex justify-between items-center bg-black/5 p-3 rounded-lg border border-gray-200 dark:border-gray-800"><div><p class="text-xs font-bold uppercase text-adaptive">${i.name}</p><p class="text-[10px] opacity-60 text-adaptive">${i.brand || 'S/M'} | ${fmt(i.price)} x ${i.qty}</p></div><div class="flex items-center gap-3"><span class="font-bold accent-color text-sm">${fmt(i.price * i.qty)}</span><button onclick="window.removeFromCart('${i.id}')" class="text-red-400 hover:scale-110 transition-transform"><i data-lucide="x-circle" class="w-4 h-4"></i></button></div></div>`).join(''); document.getElementById('cart-total').innerText = fmt(cart.reduce((s, i) => s + (i.price * i.qty), 0)); document.getElementById('cart-count').innerText = cart.length; lucide.createIcons(); };
+        window.updateSupplierSelect = () => { const s = document.getElementById('p-supplier'); if (s) s.innerHTML = '<option value="">Seleccionar</option>' + suppliers.map(x => `<option value="${x.id}">${x.name}</option>`).join(''); };
+        window.updateDatalists = () => { const nEl = document.getElementById('list-product-names'); const bEl = document.getElementById('list-brands'); if (nEl) nEl.innerHTML = [...new Set(products.map(p => p.name))].map(n => `<option value="${n}">`).join(''); if (bEl) bEl.innerHTML = [...new Set(products.map(p => p.brand))].map(b => `<option value="${b}">`).join(''); };
+        
+        window.filterHistory = () => { 
+            const hl = document.getElementById('history-list'); if(!hl) return; 
+            const fF = document.getElementById('hist-from'); const fT = document.getElementById('hist-to');
+            const fS = document.getElementById('hist-search'); const fTy = document.getElementById('hist-type');
+            const from = fF?.value ? new Date(fF.value + "T00:00:00").getTime() : 0;
+            const to = fT?.value ? new Date(fT.value + "T23:59:59").getTime() : Infinity;
+            const term = fS?.value.toLowerCase() || ""; const type = fTy?.value;
+
+            let f = historyRaw.filter(h => {
+                const ts = h.date?.toDate ? h.date.toDate().getTime() : 0;
+                const matchesText = h.detail.toLowerCase().includes(term) || (h.customerName && h.customerName.toLowerCase().includes(term));
+                const matchesType = !type || h.saleMode === type;
+                // Búsqueda por proveedor en el historial
+                const hasSupplier = h.items?.some(item => suppliers.find(s => s.id === item.supplierId)?.name.toLowerCase().includes(term));
+                return ts >= from && ts <= to && (matchesText || hasSupplier) && matchesType;
+            }).sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)); 
+            
+            if(!fF?.value && !fT?.value && !term && !type) f = f.slice(0,10); 
+            hl.innerHTML = f.map(h => `<tr class="border-b border-gray-200 dark:border-gray-800 text-xs text-adaptive"><td class="p-4 opacity-70">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-300 dark:border-gray-700">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold">${h.customerName || 'Mostrador'}</td><td class="p-4 opacity-70 truncate max-w-[200px]">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join(''); 
         };
 
-        window.renderSuppliers = () => {
-            const spl = document.getElementById('supplier-list'); if(!spl) return;
-            const sVal = document.getElementById('supplier-search').value.toLowerCase();
-            const f = suppliers.filter(s => (s.name && s.name.toLowerCase().includes(sVal)) || (s.city && s.city.toLowerCase().includes(sVal)));
-            spl.innerHTML = f.map(s => `<div class="bg-card p-6 rounded-xl border border-gray-800 relative group shadow-md"><div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity"><button onclick='window.editSupplier(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="window.deleteSupplier('${s.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div><h4 class="text-lg font-bold mb-2 text-adaptive">${s.name}</h4><div class="space-y-1 text-xs opacity-60"><p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${s.whatsapp || '-'}</p><p><i data-lucide="map-pin" class="inline w-3 h-3 mr-1"></i> ${s.city || 'S/C'}</p></div></div>`).join('');
-            lucide.createIcons();
-        };
-
-        window.handleInvoiceDownload = () => { if(currentInvoiceData) window.generateInvoice(currentInvoiceData.items, currentInvoiceData.total, currentInvoiceData.customer, true); };
-        window.handleInvoiceShare = async () => { if(!currentInvoiceData) return; const pdfBlob = window.generateInvoice(currentInvoiceData.items, currentInvoiceData.total, currentInvoiceData.customer, false); if (navigator.share) { const file = new File([pdfBlob], `Factura_${currentInvoiceData.customer.replace(/\s+/g, '_')}.pdf`, { type: 'application/pdf' }); try { await navigator.share({ files: [file], title: 'Factura' }); } catch (err) {} } else { window.showToast("Compartir no disponible"); } };
         window.generateInvoice = (items, total, customer, download = true) => {
             const { jsPDF } = window.jspdf; const doc = new jsPDF();
             doc.setFillColor(30, 30, 30); doc.rect(0, 0, 210, 40, 'F');
@@ -635,30 +659,14 @@
             doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.text("Comprobante de Venta", 15, 32);
             doc.text(`Cliente: ${customer}`, 150, 25); doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 150, 32);
             doc.autoTable({ startY: 50, head: [['Producto', 'Marca', 'Modelo', 'Cant.', 'Unitario', 'Subtotal']], body: items.map(i => [i.name, i.brand || '-', i.model || '-', i.qty, fmt(i.price), fmt(i.price * i.qty)]), theme: 'grid', headStyles: { fillColor: [245, 158, 11], textColor: [0, 0, 0] } });
-            const fY = doc.lastAutoTable.finalY + 15;
-            doc.setTextColor(0, 0, 0); doc.setFontSize(14); doc.text(`TOTAL: ${fmt(total)}`, 140, fY);
+            const finalY = doc.lastAutoTable.finalY + 15;
+            doc.setTextColor(0, 0, 0); doc.setFontSize(14); doc.text(`TOTAL: ${fmt(total)}`, 140, finalY);
             doc.setFontSize(8); doc.setTextColor(100, 100, 100);
-            doc.text("¡Gracias por su compra en Herramientas Libres!", 15, fY + 15);
-            doc.text("Se aceptan devoluciones por mal funcionamiento solo dentro de las 72 hs de hecha la compra.", 15, fY + 20);
-            doc.text("El producto debe estar en su caja original, con todos los accesorios.", 15, fY + 25);
+            doc.text("¡Gracias por su compra en Herramientas Libres!", 15, finalY + 15);
+            doc.text("Se aceptan devoluciones por mal funcionamiento solo dentro de las 72 hs de hecha la compra.", 15, finalY + 20);
+            doc.text("El producto debe estar en su caja original, con todos los accesorios.", 15, finalY + 25);
             if (download) doc.save(`Factura_${customer}.pdf`); else return doc.output('blob');
         };
-
-        async function handleProductSubmit(e) { e.preventDefault(); const id = document.getElementById('p-id').value; const data = { name: document.getElementById('p-name').value, brand: document.getElementById('p-brand').value, model: document.getElementById('p-model').value, code: document.getElementById('p-code').value, supplierId: document.getElementById('p-supplier').value, stock: parseInt(document.getElementById('p-stock').value), cost: parseFloat(document.getElementById('p-cost').value), price: parseFloat(document.getElementById('p-price').value), image: document.getElementById('p-image-data').value, updatedAt: serverTimestamp() }; if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), data); else { data.createdAt = serverTimestamp(); await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), data); } closeModal('modal-product'); window.showToast("Herramienta guardada"); }
-        async function handleSupplierSubmit(e) { e.preventDefault(); const id = document.getElementById('s-id').value; const data = { name: document.getElementById('s-name').value, whatsapp: document.getElementById('s-whatsapp').value, phone: document.getElementById('s-phone').value, email: document.getElementById('s-email').value, address: document.getElementById('s-address').value, city: document.getElementById('s-city').value, country: document.getElementById('s-country').value, updatedAt: serverTimestamp() }; if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id), data); else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), { ...data, createdAt: serverTimestamp() }); closeModal('modal-supplier'); window.showToast("Proveedor guardado"); }
-        async function handleExpenseSubmit(e) { e.preventDefault(); const id = document.getElementById('e-id').value; const data = { concept: document.getElementById('e-concept').value, category: document.getElementById('e-category').value, amount: parseFloat(document.getElementById('e-amount').value), date: serverTimestamp() }; if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id), data); else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), data); closeModal('modal-expense'); window.showToast("Egreso registrado"); }
-        async function handleClientEditSubmit(e) { e.preventDefault(); const id = document.getElementById('edit-c-id').value; if(!id) return; const data = { name: document.getElementById('edit-c-name').value, surname: document.getElementById('edit-c-surname').value, phone: document.getElementById('edit-c-phone').value, email: document.getElementById('edit-c-email').value, updatedAt: serverTimestamp() }; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'customers', id), data); closeModal('modal-client'); window.showToast("Cliente actualizado"); }
-
-        window.exportStock = (onlyFiltered) => { const sVal = document.getElementById('stock-search').value.toLowerCase(); let d = onlyFiltered ? products.filter(p => (p.name && p.name.toLowerCase().includes(sVal)) || (p.brand && p.brand.toLowerCase().includes(sVal)) || (p.model && p.model.toLowerCase().includes(sVal))) : products; if(!d.length) return window.showToast("Sin datos"); let csv = "\uFEFFNombre,Marca,Modelo,Codigo,Stock,Costo,Precio Final\n"; d.forEach(p => { csv += `"${p.name || ''}","${p.brand || ''}","${p.model || ''}","${p.code || ''}",${p.stock || 0},${p.cost || 0},${p.price || 0}\n`; }); const b = new Blob([csv], {type:'text/csv;charset=utf-8;'}); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = `Stock.csv`; a.click(); };
-        window.viewLargeImage = (src) => { const v = document.getElementById('image-viewer'); const i = document.getElementById('enlarged-image'); if(v && i && src) { i.src = src; v.classList.remove('hidden'); v.classList.add('flex'); lucide.createIcons(); } };
-        window.closeImageViewer = () => { const v = document.getElementById('image-viewer'); if(v) { v.classList.add('hidden'); v.classList.remove('flex'); } };
-        window.removeFromCart = (id) => { cart = cart.filter(i => i.id !== id); window.renderCart(); };
-        window.updateSupplierSelect = () => { const s = document.getElementById('p-supplier'); if (s) s.innerHTML = '<option value="">Seleccionar</option>' + suppliers.map(x => `<option value="${x.id}">${x.name}</option>`).join(''); };
-        window.updateDatalists = () => { const nEl = document.getElementById('list-product-names'); const bEl = document.getElementById('list-brands'); if (nEl) nEl.innerHTML = [...new Set(products.map(p => p.name))].map(n => `<option value="${n}">`).join(''); if (bEl) bEl.innerHTML = [...new Set(products.map(p => p.brand))].map(b => `<option value="${b}">`).join(''); };
-        window.calculateStats = () => { const m = document.getElementById('accounting-month').value; const fs = historyRaw.filter(h => h.date && h.date.toDate().toISOString().slice(0,7) === m); const fe = expenses.filter(e => e.date && e.date.toDate().toISOString().slice(0,7) === m); document.getElementById('stat-sales').innerText = fmt(fs.reduce((s,h) => s + (h.amount || 0), 0)); document.getElementById('stat-expenses').innerText = fmt(fe.reduce((s,e) => s + (e.amount || 0), 0)); document.getElementById('stat-balance').innerText = fmt(fs.reduce((s,h) => s + (h.amount || 0), 0) - fe.reduce((s,e) => s + (e.amount || 0), 0)); };
-        window.filterHistory = () => { const hl = document.getElementById('history-list'); if(!hl) return; const fF = document.getElementById('hist-from'); const fT = document.getElementById('hist-to'); const fS = document.getElementById('hist-search'); const fTy = document.getElementById('hist-type'); const from = fF?.value ? new Date(fF.value + "T00:00:00").getTime() : 0; const to = fT?.value ? new Date(fT.value + "T23:59:59").getTime() : Infinity; const term = fS?.value.toLowerCase() || ""; const type = fTy?.value; let f = historyRaw.filter(h => { const ts = h.date?.toDate ? h.date.toDate().getTime() : 0; const ms = h.detail.toLowerCase().includes(term) || (h.customerName && h.customerName.toLowerCase().includes(term)); const mt = !type || h.saleMode === type; return ts >= from && ts <= to && ms && mt; }).sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)); if(!fF?.value && !fT?.value && !term && !type) f = f.slice(0,10); hl.innerHTML = f.map(h => `<tr class="border-b border-gray-200 dark:border-gray-800 text-xs"><td class="p-4 opacity-60">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-300">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-adaptive">${h.customerName || 'Mostrador'}</td><td class="p-4 opacity-60 truncate">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join(''); };
-        window.editExpense = (e) => { document.getElementById('e-id').value = e.id; document.getElementById('e-concept').value = e.concept; document.getElementById('e-category').value = e.category; document.getElementById('e-amount').value = e.amount; window.openModal('modal-expense'); };
-        window.viewClientHistory = (id, name) => { const cs = historyRaw.filter(h => h.customerId === id); document.getElementById('client-history-name').innerText = `Compras de ${name}`; document.getElementById('client-history-content').innerHTML = cs.length ? cs.map(h => `<div class="mb-4 p-4 bg-black/5 rounded border border-gray-200 dark:border-gray-800 shadow-sm"><div class="flex justify-between text-xs mb-1"><span class="opacity-60">${h.date?.toDate ? h.date.toDate().toLocaleDateString() : 'Reciente'}</span><span class="font-bold uppercase text-amber-600">${h.saleMode}</span></div><p class="text-sm text-adaptive">${h.detail}</p><p class="text-right font-bold mt-2 text-amber-600">${fmt(h.amount)}</p></div>`).join('') : '<p class="text-center italic opacity-40 text-adaptive">Sin compras registradas</p>'; window.openModal('modal-client-history'); };
 
         window.addEventListener('load', startApp);
     </script>
