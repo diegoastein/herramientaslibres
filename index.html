@@ -375,6 +375,14 @@
         </div>
     </div>
 
+    <!-- VISOR DE IMÁGENES AMPLIADO -->
+    <div id="image-viewer" class="fixed inset-0 bg-black/90 z-[10000] hidden items-center justify-center p-4" onclick="window.closeImageViewer()">
+        <div class="relative max-w-4xl max-h-screen">
+            <button class="absolute -top-10 right-0 text-white hover:text-accent-color"><i data-lucide="x" class="w-8 h-8"></i></button>
+            <img id="enlarged-image" src="" class="max-w-full max-h-[85vh] rounded-lg shadow-2xl border border-gray-700 bg-black">
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
@@ -490,7 +498,12 @@
 
             sl.innerHTML = filtered.map(p => `
                 <tr class="border-b border-gray-800 hover:bg-white/5 transition-colors">
-                    <td class="p-4"><img src="${p.image || ''}" class="w-10 h-10 object-cover rounded bg-gray-800" onerror="this.src='https://via.placeholder.com/40'"></td>
+                    <td class="p-4">
+                        <img src="${p.image || ''}" 
+                             onclick="window.viewLargeImage('${p.image}')" 
+                             class="w-10 h-10 object-cover rounded bg-gray-800 cursor-zoom-in hover:opacity-80 transition-opacity shadow-sm" 
+                             onerror="this.src='https://via.placeholder.com/40'">
+                    </td>
                     <td class="p-4 font-medium text-sm text-white">${p.name}</td>
                     <td class="p-4 text-gray-400 text-xs uppercase">${p.brand || 'S/M'}</td>
                     <td class="p-4 font-bold text-xs ${p.stock < 5 ? 'text-red-500' : 'text-green-500'}">${p.stock} UN</td>
@@ -797,6 +810,26 @@
             document.getElementById('s-email').value = s.email; document.getElementById('s-address').value = s.address;
             document.getElementById('s-city').value = s.city; document.getElementById('s-country').value = s.country;
             window.openModal('modal-supplier');
+        };
+
+        // --- VISUALIZACIÓN DE IMÁGENES ---
+        window.viewLargeImage = (src) => {
+            const viewer = document.getElementById('image-viewer');
+            const img = document.getElementById('enlarged-image');
+            if (viewer && img && src) {
+                img.src = src;
+                viewer.classList.remove('hidden');
+                viewer.classList.add('flex');
+                lucide.createIcons();
+            }
+        };
+
+        window.closeImageViewer = () => {
+            const viewer = document.getElementById('image-viewer');
+            if (viewer) {
+                viewer.classList.add('hidden');
+                viewer.classList.remove('flex');
+            }
         };
 
         window.deleteProduct = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id)); };
