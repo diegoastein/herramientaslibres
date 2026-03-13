@@ -41,8 +41,6 @@
         }
 
         .modal-scroll { max-height: 80vh; overflow-y: auto; }
-        
-        /* Asegurar que el contenido se vea mientras carga */
         .tab-content { transition: opacity 0.2s ease-in-out; }
     </style>
 </head>
@@ -134,7 +132,7 @@
                         <div class="grid grid-cols-1 gap-3">
                             <div>
                                 <label class="block text-[10px] text-gray-500 uppercase font-bold">Cliente (Nombre o Tel)</label>
-                                <input type="text" id="sale-customer-search" placeholder="Juan Pérez / 11..." class="w-full p-2 text-sm rounded outline-none" oninput="suggestCustomers(this.value)">
+                                <input type="text" id="sale-customer-search" placeholder="Buscar cliente..." class="w-full p-2 text-sm rounded outline-none" oninput="suggestCustomers(this.value)">
                                 <div id="customer-suggestions" class="bg-gray-800 rounded mt-1 hidden max-h-40 overflow-y-auto border border-gray-700"></div>
                             </div>
                             <div id="new-customer-fields" class="grid grid-cols-2 gap-2 hidden">
@@ -223,11 +221,11 @@
     <datalist id="list-product-names"></datalist>
     <datalist id="list-brands"></datalist>
 
-    <!-- MODAL: PRODUCTO -->
+    <!-- MODAL PRODUCTO -->
     <div id="modal-product" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
-        <div class="bg-card w-full max-w-2xl rounded-2xl border border-gray-700 overflow-hidden max-h-[90vh] overflow-y-auto">
+        <div class="bg-card w-full max-w-2xl rounded-2xl border border-gray-700 overflow-hidden max-h-[90vh] modal-scroll">
             <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-black/20">
-                <h3 class="text-xl font-bold" id="product-modal-title">Herramienta</h3>
+                <h3 class="text-xl font-bold">Herramienta</h3>
                 <button onclick="closeModal('modal-product')"><i data-lucide="x"></i></button>
             </div>
             <form id="form-product" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -247,15 +245,15 @@
                     </div>
                     <input type="hidden" id="p-image-data">
                 </div>
-                <div class="md:col-span-2 flex gap-2"><button type="submit" class="btn-primary flex-1 py-3 rounded-lg">Guardar</button><button type="button" onclick="closeModal('modal-product')" class="flex-1 bg-gray-700 py-3 rounded-lg">Cerrar</button></div>
+                <div class="md:col-span-2 flex gap-2"><button type="submit" class="btn-primary flex-1 py-3 rounded-lg">Guardar</button></div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL: PROVEEDOR -->
+    <!-- MODAL PROVEEDOR -->
     <div id="modal-supplier" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
         <div class="bg-card w-full max-w-lg rounded-2xl border border-gray-700 overflow-hidden">
-            <div class="p-6 border-b border-gray-800 flex justify-between items-center"><h3 class="text-xl font-bold" id="supplier-modal-title">Proveedor</h3><button onclick="closeModal('modal-supplier')"><i data-lucide="x"></i></button></div>
+            <div class="p-6 border-b border-gray-800 flex justify-between items-center"><h3 class="text-xl font-bold">Proveedor</h3><button onclick="closeModal('modal-supplier')"><i data-lucide="x"></i></button></div>
             <form id="form-supplier" class="p-6 space-y-4">
                 <input type="hidden" id="s-id">
                 <div><label class="text-xs text-gray-500">Razón Social</label><input type="text" id="s-name" required class="w-full p-2 rounded outline-none"></div>
@@ -269,12 +267,12 @@
                     <div><label class="text-xs text-gray-500">Ciudad</label><input type="text" id="s-city" class="w-full p-2 rounded outline-none"></div>
                     <div><label class="text-xs text-gray-500">País</label><input type="text" id="s-country" value="Argentina" class="w-full p-2 rounded outline-none"></div>
                 </div>
-                <div class="flex gap-2 pt-4"><button type="submit" class="btn-primary flex-1 py-3 rounded-lg">Guardar</button><button type="button" onclick="closeModal('modal-supplier')" class="flex-1 bg-gray-700 py-3 rounded-lg">Cerrar</button></div>
+                <div class="flex gap-2 pt-4"><button type="submit" class="btn-primary flex-1 py-3 rounded-lg">Guardar</button></div>
             </form>
         </div>
     </div>
 
-    <!-- MODALES ADICIONALES -->
+    <!-- MODAL EGRESO -->
     <div id="modal-expense" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
         <div class="bg-card w-full max-w-md rounded-2xl border border-gray-700 overflow-hidden">
             <div class="p-6 border-b border-gray-800 flex justify-between items-center"><h3>Nuevo Egreso</h3><button onclick="closeModal('modal-expense')"><i data-lucide="x"></i></button></div>
@@ -310,47 +308,214 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, increment, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        // Gestión de Configuración para GitHub Pages (Protección contra errores)
+        // --- GLOBAL VARIABLES & STATE ---
+        let products = [], suppliers = [], historyRaw = [], customers = [], expenses = [], cart = [], saleType = 'presencial';
+        let selectedCustomerId = null;
+        let db = null;
+        let auth = null;
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'herramientas-libres-pro';
         let firebaseConfig = {};
         try {
             firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         } catch (e) {
-            console.warn("Configuración de Firebase no detectada.");
-        }
-        
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'herramientas-libres-pro';
-
-        // Inicialización solo si hay config
-        let db = null;
-        let auth = null;
-        if (firebaseConfig.apiKey) {
-            const app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-        }
-
-        let products = [], suppliers = [], historyRaw = [], customers = [], expenses = [], cart = [], saleType = 'presencial';
-        let selectedCustomerId = null;
-
-        if (auth) {
-            onAuthStateChanged(auth, (user) => { if (user) { document.getElementById('auth-status').innerText = 'En línea'; initListeners(); } });
-            const initAuth = async () => { if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token); else await signInAnonymously(auth); };
-            initAuth();
-        } else {
-            document.getElementById('auth-status').innerText = 'Modo local (Sin Firebase)';
-        }
-
-        function initListeners() {
-            if (!db) return;
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), sn => { products = sn.docs.map(d => ({id:d.id, ...d.data()})); renderStock(); updateDatalists(); });
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), sn => { suppliers = sn.docs.map(d => ({id:d.id, ...d.data()})); renderSuppliers(); updateSupplierSelect(); });
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'history'), sn => { historyRaw = sn.docs.map(d => ({id:d.id, ...d.data()})); filterHistory(); calculateStats(); });
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'customers'), sn => { customers = sn.docs.map(d => ({id:d.id, ...d.data()})); renderCustomers(); });
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), sn => { expenses = sn.docs.map(d => ({id:d.id, ...d.data()})); renderExpenses(); calculateStats(); });
+            console.warn("Firebase config not found.");
         }
 
         const fmt = (n) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
 
+        // --- UI & RENDER FUNCTIONS (Exposed to window for accessibility) ---
+
+        window.renderStock = () => {
+            const sl = document.getElementById('stock-list');
+            if(!sl) return;
+            sl.innerHTML = products.map(p => `<tr class="border-b border-gray-800 hover:bg-white/5 transition-colors"><td class="p-4"><img src="${p.image || 'https://via.placeholder.com/40'}" class="w-10 h-10 object-cover rounded bg-gray-800"></td><td class="p-4 font-medium text-sm">${p.name}</td><td class="p-4 text-gray-400 text-xs uppercase">${p.brand}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${p.stock < 5 ? 'bg-red-900/40 text-red-400' : 'bg-green-900/40 text-green-400'}">${p.stock} UN</span></td><td class="p-4 font-bold text-sm accent-color">${fmt(p.price)}</td><td class="p-4 flex gap-2"><button onclick='editProduct(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="deleteProduct('${p.id}')" class="text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('');
+            lucide.createIcons();
+        };
+
+        window.renderSuppliers = () => {
+            const spl = document.getElementById('supplier-list');
+            if(!spl) return;
+            spl.innerHTML = suppliers.map(s => `<div class="bg-card p-6 rounded-xl border border-gray-800 relative group"><div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity"><button onclick='editSupplier(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="deleteSupplier('${s.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div><h4 class="text-lg font-bold mb-2 text-white">${s.name}</h4><div class="space-y-1 text-xs text-gray-400"><p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${s.whatsapp || '-'}</p><p><i data-lucide="map-pin" class="inline w-3 h-3 mr-1"></i> ${s.city}</p></div></div>`).join('');
+            lucide.createIcons();
+        };
+
+        window.renderCustomers = () => {
+            const el = document.getElementById('filter-clients');
+            if (!el) return;
+            const term = el.value.toLowerCase();
+            const filtered = customers.filter(c => c.name.toLowerCase().includes(term) || c.phone?.includes(term));
+            document.getElementById('customer-list').innerHTML = filtered.map(c => `
+                <div class="bg-card p-6 rounded-xl border border-gray-800 relative group">
+                    <button onclick="viewClientHistory('${c.id}', '${c.name}')" class="absolute top-4 right-4 text-amber-500 hover:scale-110 transition-all"><i data-lucide="history" class="w-5 h-5"></i></button>
+                    <h4 class="text-lg font-bold mb-2">${c.name}</h4>
+                    <div class="text-xs text-gray-400 space-y-1">
+                        <p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${c.phone || 'S/T'}</p>
+                        <p><i data-lucide="mail" class="inline w-3 h-3 mr-1"></i> ${c.email || 'S/E'}</p>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        };
+
+        window.renderExpenses = () => {
+            const el = document.getElementById('expense-list');
+            if(!el) return;
+            el.innerHTML = expenses.map(e => `
+                <tr class="border-b border-gray-800 hover:bg-white/5">
+                    <td class="p-4 text-xs text-gray-500">${e.date?.toDate ? e.date.toDate().toLocaleDateString() : '-'}</td>
+                    <td class="p-4 font-medium">${e.concept}</td>
+                    <td class="p-4"><span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-gray-400 uppercase">${e.category}</span></td>
+                    <td class="p-4 font-bold text-red-400">${fmt(e.amount)}</td>
+                    <td class="p-4 flex gap-2">
+                        <button onclick='editExpense(${JSON.stringify(e).replace(/'/g, "&apos;")})' class="text-gray-500 hover:text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                        <button onclick="deleteExpense('${e.id}')" class="text-gray-500 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        };
+
+        window.calculateStats = () => {
+            const totalSales = historyRaw.reduce((s, h) => s + (h.amount || 0), 0);
+            const totalExpenses = expenses.reduce((s, e) => s + (e.amount || 0), 0);
+            const sSales = document.getElementById('stat-sales'); if(sSales) sSales.innerText = fmt(totalSales);
+            const sExp = document.getElementById('stat-expenses'); if(sExp) sExp.innerText = fmt(totalExpenses);
+            const sBal = document.getElementById('stat-balance'); if(sBal) sBal.innerText = fmt(totalSales - totalExpenses);
+        };
+
+        // --- DATASET UPDATES ---
+        window.updateSupplierSelect = () => {
+            const s = document.getElementById('p-supplier'); const v = s?.value;
+            if (s) {
+                s.innerHTML = '<option value="">Seleccionar</option>' + suppliers.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
+                s.value = v;
+            }
+        };
+
+        window.updateDatalists = () => {
+            const ns = [...new Set(products.map(p => p.name))];
+            const bs = [...new Set(products.map(p => p.brand))];
+            const nEl = document.getElementById('list-product-names');
+            const bEl = document.getElementById('list-brands');
+            if (nEl) nEl.innerHTML = ns.map(n => `<option value="${n}">`).join('');
+            if (bEl) bEl.innerHTML = bs.map(b => `<option value="${b}">`).join('');
+        };
+
+        // --- FORM HANDLERS ---
+        const handleProductSubmit = async (e) => {
+            e.preventDefault();
+            if (!db || !auth?.currentUser) return showToast("No autenticado");
+            const id = document.getElementById('p-id').value;
+            const data = {
+                name: document.getElementById('p-name').value,
+                brand: document.getElementById('p-brand').value,
+                code: document.getElementById('p-code').value,
+                supplierId: document.getElementById('p-supplier').value,
+                stock: parseInt(document.getElementById('p-stock').value),
+                cost: parseFloat(document.getElementById('p-cost').value),
+                price: parseFloat(document.getElementById('p-price').value),
+                image: document.getElementById('p-image-data').value,
+                updatedAt: serverTimestamp()
+            };
+            try {
+                if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), data);
+                else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { ...data, createdAt: serverTimestamp() });
+                closeModal('modal-product'); showToast("Producto guardado");
+            } catch(err) { showToast("Error al guardar"); }
+        };
+
+        const handleSupplierSubmit = async (e) => {
+            e.preventDefault();
+            if (!db || !auth?.currentUser) return;
+            const id = document.getElementById('s-id').value;
+            const data = {
+                name: document.getElementById('s-name').value,
+                whatsapp: document.getElementById('s-whatsapp').value,
+                phone: document.getElementById('s-phone').value,
+                email: document.getElementById('s-email').value,
+                address: document.getElementById('s-address').value,
+                city: document.getElementById('s-city').value,
+                country: document.getElementById('s-country').value,
+                updatedAt: serverTimestamp()
+            };
+            try {
+                if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id), data);
+                else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), { ...data, createdAt: serverTimestamp() });
+                closeModal('modal-supplier'); showToast("Proveedor guardado");
+            } catch(err) { showToast("Error al guardar"); }
+        };
+
+        const handleExpenseSubmit = async (e) => {
+            e.preventDefault();
+            if (!db || !auth?.currentUser) return;
+            const id = document.getElementById('e-id').value;
+            const data = { 
+                concept: document.getElementById('e-concept').value, 
+                category: document.getElementById('e-category').value, 
+                amount: parseFloat(document.getElementById('e-amount').value), 
+                date: serverTimestamp() 
+            };
+            try {
+                if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id), data);
+                else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), data);
+                closeModal('modal-expense'); showToast("Egreso registrado");
+            } catch(err) { showToast("Error al guardar"); }
+        };
+
+        // --- INICIALIZACIÓN ---
+        const startApp = async () => {
+            if (firebaseConfig.apiKey) {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (err) {
+                    console.error("Auth error:", err);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        document.getElementById('auth-status').innerText = 'En Línea';
+                        initListeners();
+                    } else {
+                        document.getElementById('auth-status').innerText = 'Sin Sesión';
+                    }
+                });
+            } else {
+                document.getElementById('auth-status').innerText = 'Modo Local (Offline)';
+            }
+            
+            const fP = document.getElementById('form-product'); if(fP) fP.onsubmit = handleProductSubmit;
+            const fS = document.getElementById('form-supplier'); if(fS) fS.onsubmit = handleSupplierSubmit;
+            const fE = document.getElementById('form-expense'); if(fE) fE.onsubmit = handleExpenseSubmit;
+
+            setSaleType('presencial');
+            setTimeout(() => switchTab('stock'), 300);
+        };
+
+        function initListeners() {
+            if (!db) return;
+            const pPath = collection(db, 'artifacts', appId, 'public', 'data', 'products');
+            const sPath = collection(db, 'artifacts', appId, 'public', 'data', 'suppliers');
+            const hPath = collection(db, 'artifacts', appId, 'public', 'data', 'history');
+            const cPath = collection(db, 'artifacts', appId, 'public', 'data', 'customers');
+            const ePath = collection(db, 'artifacts', appId, 'public', 'data', 'expenses');
+
+            onSnapshot(pPath, sn => { products = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderStock(); window.updateDatalists(); });
+            onSnapshot(sPath, sn => { suppliers = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderSuppliers(); window.updateSupplierSelect(); });
+            onSnapshot(hPath, sn => { historyRaw = sn.docs.map(d => ({id:d.id, ...d.data()})); window.filterHistory(); window.calculateStats(); });
+            onSnapshot(cPath, sn => { customers = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderCustomers(); });
+            onSnapshot(ePath, sn => { expenses = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderExpenses(); window.calculateStats(); });
+        }
+
+        // --- GLOBAL NAVIGATION FUNCTIONS ---
         window.switchTab = (id) => {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
             const target = document.getElementById(`sec-${id}`);
@@ -367,21 +532,13 @@
 
         window.openModal = (id) => { 
             const el = document.getElementById(id);
-            if (el) {
-                el.classList.remove('hidden'); 
-                el.classList.add('flex'); 
-                lucide.createIcons(); 
-            }
+            if (el) { el.classList.remove('hidden'); el.classList.add('flex'); lucide.createIcons(); }
         };
         window.closeModal = (id) => { 
             const el = document.getElementById(id);
-            if (el) {
-                el.classList.add('hidden'); 
-                el.classList.remove('flex'); 
-            }
+            if (el) { el.classList.add('hidden'); el.classList.remove('flex'); }
         };
 
-        // IMAGE HANDLER
         window.handleImageUpload = (e) => {
             const f = e.target.files[0];
             if(!f) return;
@@ -403,27 +560,6 @@
             r.readAsDataURL(f);
         };
 
-        // PRODUCT FORMS
-        document.getElementById('form-product').onsubmit = async (e) => {
-            e.preventDefault();
-            if (!db) return showToast("No hay conexión a base de datos");
-            const id = document.getElementById('p-id').value;
-            const data = {
-                name: document.getElementById('p-name').value,
-                brand: document.getElementById('p-brand').value,
-                code: document.getElementById('p-code').value,
-                supplierId: document.getElementById('p-supplier').value,
-                stock: parseInt(document.getElementById('p-stock').value),
-                cost: parseFloat(document.getElementById('p-cost').value),
-                price: parseFloat(document.getElementById('p-price').value),
-                image: document.getElementById('p-image-data').value,
-                updatedAt: serverTimestamp()
-            };
-            if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), data);
-            else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { ...data, createdAt: serverTimestamp() });
-            closeModal('modal-product'); showToast("Producto guardado");
-        };
-
         window.editProduct = (p) => {
             document.getElementById('p-id').value = p.id;
             document.getElementById('p-name').value = p.name;
@@ -440,26 +576,6 @@
 
         window.deleteProduct = async (id) => { if(confirm("¿Eliminar herramienta?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id)); };
 
-        // SUPPLIER FORMS
-        document.getElementById('form-supplier').onsubmit = async (e) => {
-            e.preventDefault();
-            if (!db) return;
-            const id = document.getElementById('s-id').value;
-            const data = {
-                name: document.getElementById('s-name').value,
-                whatsapp: document.getElementById('s-whatsapp').value,
-                phone: document.getElementById('s-phone').value,
-                email: document.getElementById('s-email').value,
-                address: document.getElementById('s-address').value,
-                city: document.getElementById('s-city').value,
-                country: document.getElementById('s-country').value,
-                updatedAt: serverTimestamp()
-            };
-            if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id), data);
-            else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), { ...data, createdAt: serverTimestamp() });
-            closeModal('modal-supplier'); showToast("Proveedor guardado");
-        };
-
         window.editSupplier = (s) => {
             document.getElementById('s-id').value = s.id;
             document.getElementById('s-name').value = s.name;
@@ -474,12 +590,11 @@
 
         window.deleteSupplier = async (id) => { if(confirm("¿Eliminar proveedor?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id)); };
 
-        // VENTAS LOGIC
         window.setSaleType = (type) => {
             saleType = type;
             const p = document.getElementById('btn-presencial'), o = document.getElementById('btn-online');
-            p.className = type === 'presencial' ? 'py-2 rounded border border-amber-500 text-xs bg-amber-500/10 text-amber-500' : 'py-2 rounded border border-gray-700 text-xs bg-gray-800 text-white';
-            o.className = type === 'online' ? 'py-2 rounded border border-amber-500 text-xs bg-amber-500/10 text-amber-500' : 'py-2 rounded border border-gray-700 text-xs bg-gray-800 text-white';
+            if(p) p.className = type === 'presencial' ? 'py-2 rounded border border-amber-500 text-xs bg-amber-500/10 text-amber-500 font-bold' : 'py-2 rounded border border-gray-700 text-xs bg-gray-800 text-white';
+            if(o) o.className = type === 'online' ? 'py-2 rounded border border-amber-500 text-xs bg-amber-500/10 text-amber-500 font-bold' : 'py-2 rounded border border-gray-700 text-xs bg-gray-800 text-white';
         };
 
         window.suggestCustomers = (term) => {
@@ -503,10 +618,11 @@
         };
 
         window.processSale = async () => {
-            if(!db) return showToast("Sin conexión a base de datos");
+            if(!db || !auth?.currentUser) return showToast("Sin conexión");
             if(cart.length === 0) return showToast("Carrito vacío");
             const searchVal = document.getElementById('sale-customer-search').value.trim();
             if(!searchVal) return showToast("Identifique al cliente");
+
             try {
                 let customerId = selectedCustomerId;
                 let customerName = searchVal;
@@ -520,36 +636,23 @@
                         customerId = newC.id;
                     }
                 }
+
                 const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
                 const detail = cart.map(i => `${i.qty}x ${i.name} [${i.brand}]`).join(', ');
-                for(const it of cart) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', it.id), { stock: increment(-it.qty) }); }
+
+                for(const it of cart) { 
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', it.id), { stock: increment(-it.qty) }); 
+                }
+
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'history'), {
                     type: 'venta', saleMode: saleType, customerId, customerName, detail, amount: total, items: cart, date: serverTimestamp()
                 });
+
                 showToast("Venta Exitosa!"); cart = []; renderCart();
                 document.getElementById('sale-customer-search').value = ''; document.getElementById('c-phone').value = ''; document.getElementById('c-email').value = '';
                 selectedCustomerId = null;
-            } catch(e) { showToast("Error"); }
+            } catch(e) { showToast("Error al procesar"); }
         };
-
-        // CLIENTES
-        window.renderCustomers = () => {
-            const el = document.getElementById('filter-clients');
-            if (!el) return;
-            const term = el.value.toLowerCase();
-            const filtered = customers.filter(c => c.name.toLowerCase().includes(term) || c.phone?.includes(term));
-            document.getElementById('customer-list').innerHTML = filtered.map(c => `
-                <div class="bg-card p-6 rounded-xl border border-gray-800 relative group">
-                    <button onclick="viewClientHistory('${c.id}', '${c.name}')" class="absolute top-4 right-4 text-amber-500 hover:scale-110 transition-all"><i data-lucide="history" class="w-5 h-5"></i></button>
-                    <h4 class="text-lg font-bold mb-2">${c.name}</h4>
-                    <div class="text-xs text-gray-400 space-y-1">
-                        <p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${c.phone || 'S/T'}</p>
-                        <p><i data-lucide="mail" class="inline w-3 h-3 mr-1"></i> ${c.email || 'S/E'}</p>
-                    </div>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
 
         window.viewClientHistory = (id, name) => {
             const clientSales = historyRaw.filter(h => h.customerId === id);
@@ -563,33 +666,6 @@
             openModal('modal-client-history');
         };
 
-        // CONTABILIDAD
-        document.getElementById('form-expense').onsubmit = async (e) => {
-            e.preventDefault();
-            if (!db) return;
-            const id = document.getElementById('e-id').value;
-            const data = { concept: document.getElementById('e-concept').value, category: document.getElementById('e-category').value, amount: parseFloat(document.getElementById('e-amount').value), date: serverTimestamp() };
-            if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id), data);
-            else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), data);
-            closeModal('modal-expense'); showToast("Gasto registrado");
-        };
-
-        function renderExpenses() {
-            document.getElementById('expense-list').innerHTML = expenses.map(e => `
-                <tr class="border-b border-gray-800 hover:bg-white/5">
-                    <td class="p-4 text-xs text-gray-500">${e.date?.toDate ? e.date.toDate().toLocaleDateString() : '-'}</td>
-                    <td class="p-4 font-medium">${e.concept}</td>
-                    <td class="p-4"><span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-gray-400 uppercase">${e.category}</span></td>
-                    <td class="p-4 font-bold text-red-400">${fmt(e.amount)}</td>
-                    <td class="p-4 flex gap-2">
-                        <button onclick='editExpense(${JSON.stringify(e).replace(/'/g, "&apos;")})' class="text-gray-500 hover:text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                        <button onclick="deleteExpense('${e.id}')" class="text-gray-500 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </td>
-                </tr>
-            `).join('');
-            lucide.createIcons();
-        }
-
         window.editExpense = (e) => {
             document.getElementById('e-id').value = e.id; document.getElementById('e-concept').value = e.concept;
             document.getElementById('e-category').value = e.category; document.getElementById('e-amount').value = e.amount;
@@ -597,16 +673,8 @@
         };
         window.deleteExpense = async (id) => { if(confirm("¿Eliminar gasto?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id)); };
 
-        function calculateStats() {
-            const totalSales = historyRaw.reduce((s, h) => s + (h.amount || 0), 0);
-            const totalExpenses = expenses.reduce((s, e) => s + (e.amount || 0), 0);
-            document.getElementById('stat-sales').innerText = fmt(totalSales);
-            document.getElementById('stat-expenses').innerText = fmt(totalExpenses);
-            document.getElementById('stat-balance').innerText = fmt(totalSales - totalExpenses);
-        }
-
-        // HELPERS
-        function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.remove('opacity-0'); setTimeout(() => t.classList.add('opacity-0'), 3000); }
+        function showToast(m) { const t = document.getElementById('toast'); if(t){ t.innerText = m; t.classList.remove('opacity-0'); setTimeout(() => t.classList.add('opacity-0'), 3000); } }
+        
         window.addToCart = (p) => {
             const it = cart.find(i => i.id === p.id);
             if(it) { if(it.qty < p.stock) it.qty++; else return showToast("Stock insuficiente"); }
@@ -614,13 +682,16 @@
             renderCart();
         };
         window.removeFromCart = (id) => { cart = cart.filter(i => i.id !== id); renderCart(); };
+        window.clearCart = () => { cart = []; renderCart(); };
+
         function renderCart() {
             const c = document.getElementById('cart-items');
-            if(cart.length === 0) c.innerHTML = '<div class="text-gray-500 text-center py-8 italic text-xs uppercase tracking-widest">Esperando herramientas...</div>';
+            if(!c) return;
+            if(cart.length === 0) c.innerHTML = '<div class="text-gray-500 text-center py-8 italic text-xs uppercase tracking-widest">Carrito vacío</div>';
             else c.innerHTML = cart.map(i => `<div class="flex justify-between items-center bg-black/30 p-3 rounded-lg border border-gray-800"><div><p class="text-xs font-bold uppercase">${i.name}</p><p class="text-[10px] text-gray-500">${i.brand} | ${fmt(i.price)} x ${i.qty}</p></div><div class="flex items-center gap-3"><span class="font-bold accent-color text-sm">${fmt(i.price * i.qty)}</span><button onclick="removeFromCart('${i.id}')" class="text-red-400"><i data-lucide="x-circle" class="w-4 h-4"></i></button></div></div>`).join('');
             const t = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            document.getElementById('cart-total').innerText = fmt(t);
-            document.getElementById('cart-count').innerText = cart.length;
+            const ct = document.getElementById('cart-total'); if(ct) ct.innerText = fmt(t);
+            const cc = document.getElementById('cart-count'); if(cc) cc.innerText = cart.length;
             lucide.createIcons();
         }
 
@@ -635,58 +706,28 @@
             };
         }
 
-        function renderStock() {
-            document.getElementById('stock-list').innerHTML = products.map(p => `<tr class="border-b border-gray-800 hover:bg-white/5 transition-colors"><td class="p-4"><img src="${p.image || 'https://via.placeholder.com/40'}" class="w-10 h-10 object-cover rounded bg-gray-800"></td><td class="p-4 font-medium text-sm">${p.name}</td><td class="p-4 text-gray-400 text-xs uppercase">${p.brand}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${p.stock < 5 ? 'bg-red-900/40 text-red-400' : 'bg-green-900/40 text-green-400'}">${p.stock} UN</span></td><td class="p-4 font-bold text-sm accent-color">${fmt(p.price)}</td><td class="p-4 flex gap-2"><button onclick='editProduct(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="deleteProduct('${p.id}')" class="text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('');
-            lucide.createIcons();
-        }
-
-        function renderSuppliers() {
-            document.getElementById('supplier-list').innerHTML = suppliers.map(s => `<div class="bg-card p-6 rounded-xl border border-gray-800 relative group"><div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity"><button onclick='editSupplier(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="deleteSupplier('${s.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div><h4 class="text-lg font-bold mb-2 text-white">${s.name}</h4><div class="space-y-1 text-xs text-gray-400"><p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${s.whatsapp || '-'}</p><p><i data-lucide="map-pin" class="inline w-3 h-3 mr-1"></i> ${s.city}</p></div></div>`).join('');
-            lucide.createIcons();
-        }
-
         window.filterHistory = () => {
             const fromEl = document.getElementById('hist-from');
             const toEl = document.getElementById('hist-to');
             const searchEl = document.getElementById('hist-search');
             const typeEl = document.getElementById('hist-type');
             
-            const from = fromEl.value ? new Date(fromEl.value + "T00:00:00").getTime() : 0;
-            const to = toEl.value ? new Date(toEl.value + "T23:59:59").getTime() : Infinity;
-            const term = searchEl.value.toLowerCase();
-            const type = typeEl.value;
+            const from = fromEl?.value ? new Date(fromEl.value + "T00:00:00").getTime() : 0;
+            const to = toEl?.value ? new Date(toEl.value + "T23:59:59").getTime() : Infinity;
+            const term = searchEl?.value.toLowerCase() || "";
+            const type = typeEl?.value;
             
             const filtered = historyRaw.filter(h => { 
                 const ts = h.date?.toDate ? h.date.toDate().getTime() : 0; 
                 return ts >= from && ts <= to && (h.detail.toLowerCase().includes(term) || h.customerName?.toLowerCase().includes(term)) && (!type || h.saleMode === type); 
             });
             
-            document.getElementById('history-list').innerHTML = filtered.sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)).map(h => `<tr class="border-b border-gray-800 text-xs"><td class="p-4 text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-700">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-gray-300">${h.customerName || 'Mostrador'}</td><td class="p-4 text-gray-400 max-w-xs truncate">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join('');
+            const hl = document.getElementById('history-list');
+            if(hl) hl.innerHTML = filtered.sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)).map(h => `<tr class="border-b border-gray-800 text-xs"><td class="p-4 text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-700">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-gray-300">${h.customerName || 'Mostrador'}</td><td class="p-4 text-gray-400 max-w-xs truncate">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join('');
         };
 
-        function updateSupplierSelect() {
-            const s = document.getElementById('p-supplier'); const v = s.value;
-            if (s) {
-                s.innerHTML = '<option value="">Seleccionar</option>' + suppliers.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
-                s.value = v;
-            }
-        }
-
-        function updateDatalists() {
-            const ns = [...new Set(products.map(p => p.name))];
-            const bs = [...new Set(products.map(p => p.brand))];
-            const nEl = document.getElementById('list-product-names');
-            const bEl = document.getElementById('list-brands');
-            if (nEl) nEl.innerHTML = ns.map(n => `<option value="${n}">`).join('');
-            if (bEl) bEl.innerHTML = bs.map(b => `<option value="${b}">`).join('');
-        }
-
-        // Arranque de la aplicación
-        setSaleType('presencial');
-        // Usar setTimeout para asegurar que el DOM y los iconos estén listos
-        setTimeout(() => {
-            switchTab('stock');
-        }, 100);
+        // --- START APP ON WINDOW LOAD ---
+        window.addEventListener('load', startApp);
 
     </script>
 </body>
