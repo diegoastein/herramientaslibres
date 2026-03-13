@@ -239,8 +239,8 @@
         <section id="sec-historial" class="tab-content hidden">
             <h2 class="text-2xl font-bold mb-6">Historial de Ventas</h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-card p-4 rounded-xl border border-gray-800">
-                <input type="date" id="hist-from" class="w-full p-2 rounded text-sm">
-                <input type="date" id="hist-to" class="w-full p-2 rounded text-sm">
+                <input type="date" id="hist-from" class="w-full p-2 rounded text-sm" onchange="window.filterHistory()">
+                <input type="date" id="hist-to" class="w-full p-2 rounded text-sm" onchange="window.filterHistory()">
                 <input type="text" id="hist-search" placeholder="Buscar producto o cliente..." class="w-full p-2 rounded text-sm" oninput="window.filterHistory()">
                 <select id="hist-type" class="w-full p-2 rounded text-sm" onchange="window.filterHistory()">
                     <option value="">Todos los tipos</option>
@@ -370,6 +370,19 @@
                 <div><label class="text-xs text-gray-500">Email</label><input type="email" id="edit-c-email" class="w-full p-2 rounded outline-none"></div>
                 <div class="flex gap-2 pt-4"><button type="submit" class="btn-primary flex-1 py-3 rounded-lg">Guardar Cambios</button></div>
             </form>
+        </div>
+    </div>
+
+    <!-- MODAL HISTORIAL CLIENTE -->
+    <div id="modal-client-history" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
+        <div class="bg-card w-full max-w-2xl rounded-2xl border border-gray-700 overflow-hidden">
+            <div class="p-6 border-b border-gray-800 flex justify-between items-center">
+                <h3 id="client-history-name" class="font-bold text-white">Historial del Cliente</h3>
+                <button onclick="closeModal('modal-client-history')"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 modal-scroll" id="client-history-content">
+                <!-- Contenido cargado dinámicamente -->
+            </div>
         </div>
     </div>
 
@@ -920,15 +933,11 @@
         window.renderCart = () => { const c = document.getElementById('cart-items'); if(!c) return; if(cart.length === 0) c.innerHTML = '<div class="text-gray-500 text-center py-8 italic text-xs uppercase tracking-widest">Carrito vacío</div>'; else c.innerHTML = cart.map(i => `<div class="flex justify-between items-center bg-black/30 p-3 rounded-lg border border-gray-800"><div><p class="text-xs font-bold uppercase text-white">${i.name}</p><p class="text-[10px] text-gray-500">${i.brand || 'S/M'} | ${fmt(i.price)} x ${i.qty}</p></div><div class="flex items-center gap-3"><span class="font-bold accent-color text-sm">${fmt(i.price * i.qty)}</span><button onclick="window.removeFromCart('${i.id}')" class="text-red-400"><i data-lucide="x-circle" class="w-4 h-4"></i></button></div></div>`).join(''); document.getElementById('cart-total').innerText = fmt(cart.reduce((s, i) => s + (i.price * i.qty), 0)); document.getElementById('cart-count').innerText = cart.length; lucide.createIcons(); };
         
         window.exportStock = (onlyFiltered) => { 
-            let data = onlyFiltered ? products.filter(p => (p.name && p.name.toLowerCase().includes(document.getElementById('stock-search').value.toLowerCase())) || (p.brand && p.brand.toLowerCase().includes(document.getElementById('stock-search').value.toLowerCase())) || (p.model && p.model.toLowerCase().includes(document.getElementById('stock-search').value.toLowerCase()))) : products; 
+            const searchVal = document.getElementById('stock-search').value.toLowerCase();
+            let data = onlyFiltered ? products.filter(p => (p.name && p.name.toLowerCase().includes(searchVal)) || (p.brand && p.brand.toLowerCase().includes(searchVal)) || (p.model && p.model.toLowerCase().includes(searchVal))) : products; 
             if(!data.length) return showToast("Sin datos para exportar"); 
-            
-            // Cabecera CSV actualizada con Costo y Precio Final
             let csv = "\uFEFFNombre,Marca,Modelo,Codigo,Stock,Costo,Precio Final\n"; 
-            data.forEach(p => {
-                csv += `"${p.name || ''}","${p.brand || ''}","${p.model || ''}","${p.code || ''}",${p.stock || 0},${p.cost || 0},${p.price || 0}\n`;
-            }); 
-            
+            data.forEach(p => { csv += `"${p.name || ''}","${p.brand || ''}","${p.model || ''}","${p.code || ''}",${p.stock || 0},${p.cost || 0},${p.price || 0}\n`; }); 
             const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); 
             const url = URL.createObjectURL(blob); 
             const a = document.createElement('a'); 
@@ -944,9 +953,39 @@
         window.updateSupplierSelect = () => { const s = document.getElementById('p-supplier'); if (s) s.innerHTML = '<option value="">Seleccionar</option>' + suppliers.map(x => `<option value="${x.id}">${x.name}</option>`).join(''); };
         window.updateDatalists = () => { const nEl = document.getElementById('list-product-names'); const bEl = document.getElementById('list-brands'); if (nEl) nEl.innerHTML = [...new Set(products.map(p => p.name))].map(n => `<option value="${n}">`).join(''); if (bEl) bEl.innerHTML = [...new Set(products.map(p => p.brand))].map(b => `<option value="${b}">`).join(''); };
         window.calculateStats = () => { const m = document.getElementById('accounting-month').value; const fs = historyRaw.filter(h => h.date && h.date.toDate().toISOString().slice(0,7) === m); const fe = expenses.filter(e => e.date && e.date.toDate().toISOString().slice(0,7) === m); document.getElementById('stat-sales').innerText = fmt(fs.reduce((s,h) => s + (h.amount || 0), 0)); document.getElementById('stat-expenses').innerText = fmt(fe.reduce((s,e) => s + (e.amount || 0), 0)); document.getElementById('stat-balance').innerText = fmt(fs.reduce((s,h) => s + (h.amount || 0), 0) - fe.reduce((s,e) => s + (e.amount || 0), 0)); };
-        window.filterHistory = () => { const hl = document.getElementById('history-list'); if(!hl) return; let f = historyRaw.sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)); if(!document.getElementById('hist-search').value) f = f.slice(0,10); hl.innerHTML = f.map(h => `<tr class="border-b border-gray-800 text-xs"><td class="p-4 text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-700">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-gray-300">${h.customerName || 'Mostrador'}</td><td class="p-4 text-gray-400 truncate">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join(''); };
+        
+        window.filterHistory = () => { 
+            const hl = document.getElementById('history-list'); if(!hl) return; 
+            const fFrom = document.getElementById('hist-from');
+            const fTo = document.getElementById('hist-to');
+            const fSearch = document.getElementById('hist-search');
+            const fType = document.getElementById('hist-type');
+
+            const from = fFrom?.value ? new Date(fFrom.value + "T00:00:00").getTime() : 0;
+            const to = fTo?.value ? new Date(fTo.value + "T23:59:59").getTime() : Infinity;
+            const term = fSearch?.value.toLowerCase() || "";
+            const type = fType?.value;
+
+            let f = historyRaw.filter(h => {
+                const ts = h.date?.toDate ? h.date.toDate().getTime() : 0;
+                const matchesSearch = h.detail.toLowerCase().includes(term) || (h.customerName && h.customerName.toLowerCase().includes(term));
+                const matchesType = !type || h.saleMode === type;
+                return ts >= from && ts <= to && matchesSearch && matchesType;
+            }).sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)); 
+            
+            if(!fFrom?.value && !fTo?.value && !term && !type) f = f.slice(0,10); 
+            
+            hl.innerHTML = f.map(h => `<tr class="border-b border-gray-800 text-xs"><td class="p-4 text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-700">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-gray-300">${h.customerName || 'Mostrador'}</td><td class="p-4 text-gray-400 truncate">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join(''); 
+        };
+
         window.editExpense = (e) => { document.getElementById('e-id').value = e.id; document.getElementById('e-concept').value = e.concept; document.getElementById('e-category').value = e.category; document.getElementById('e-amount').value = e.amount; window.openModal('modal-expense'); };
-        window.viewClientHistory = (id, name) => { const cs = historyRaw.filter(h => h.customerId === id); document.getElementById('client-history-name').innerText = `Compras de ${name}`; document.getElementById('client-history-content').innerHTML = clientSales.length ? clientSales.map(h => `<div class="mb-4 p-4 bg-black/30 rounded border border-gray-800"><div class="flex justify-between text-xs mb-1"><span class="text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleDateString() : 'Reciente'}</span><span class="font-bold uppercase text-amber-500">${h.saleMode}</span></div><p class="text-sm text-white">${h.detail}</p><p class="text-right font-bold mt-2 text-amber-500">${fmt(h.amount)}</p></div>`).join('') : '<p class="text-center italic text-gray-500">Sin compras registradas</p>'; window.openModal('modal-client-history'); };
+        
+        window.viewClientHistory = (id, name) => { 
+            const cs = historyRaw.filter(h => h.customerId === id); 
+            document.getElementById('client-history-name').innerText = `Compras de ${name}`; 
+            document.getElementById('client-history-content').innerHTML = cs.length ? cs.map(h => `<div class="mb-4 p-4 bg-black/30 rounded border border-gray-800"><div class="flex justify-between text-xs mb-1"><span class="text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleDateString() : 'Reciente'}</span><span class="font-bold uppercase text-amber-500">${h.saleMode}</span></div><p class="text-sm text-white">${h.detail}</p><p class="text-right font-bold mt-2 text-amber-500">${fmt(h.amount)}</p></div>`).join('') : '<p class="text-center italic text-gray-500">Sin compras registradas</p>'; 
+            window.openModal('modal-client-history'); 
+        };
 
         window.addEventListener('load', startApp);
     </script>
