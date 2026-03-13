@@ -303,10 +303,10 @@
                 <div class="md:col-span-2">
                     <label class="text-xs text-gray-500">Imagen</label>
                     <div class="flex items-center gap-4">
-                        <!-- Ajuste para celulares: Permitir Cámara o Archivo -->
+                        <!-- ATRIBUTO capture="environment" AÑADIDO PARA HABILITAR LA CÁMARA TRASERA EN MÓVILES -->
                         <label class="flex-1 cursor-pointer bg-gray-700 p-2 rounded text-center text-xs hover:bg-gray-600 transition-colors">
                             <i data-lucide="camera" class="inline w-4 h-4 mr-1"></i> Foto o Cámara
-                            <input type="file" id="p-file-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                            <input type="file" id="p-file-input" accept="image/*" capture="environment" class="hidden" onchange="handleImageUpload(event)">
                         </label>
                         <div id="image-preview-container" class="w-12 h-12 bg-black rounded border border-gray-700 flex items-center justify-center overflow-hidden"></div>
                     </div>
@@ -578,7 +578,7 @@
                     <td class="p-4"><span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-gray-400 uppercase">${e.category}</span></td>
                     <td class="p-4 font-bold text-red-400">${fmt(e.amount)}</td>
                     <td class="p-4 flex gap-2">
-                        <button onclick='window.editExpense(${JSON.stringify(e).replace(/'/g, "&apos;")})' class="text-gray-500 hover:text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                        <button onclick='editExpense(${JSON.stringify(e).replace(/'/g, "&apos;")})' class="text-gray-500 hover:text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
                         <button onclick="window.deleteExpense('${e.id}')" class="text-gray-500 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </td>
                 </tr>`).join('');
