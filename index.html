@@ -42,9 +42,42 @@
 
         .modal-scroll { max-height: 80vh; overflow-y: auto; }
         .tab-content { transition: opacity 0.2s ease-in-out; }
+        
+        #login-overlay {
+            background-color: #121212;
+            z-index: 9999;
+        }
     </style>
 </head>
 <body class="min-h-screen pb-20 md:pb-0">
+
+    <!-- Pantalla de Login -->
+    <div id="login-overlay" class="fixed inset-0 flex items-center justify-center p-4">
+        <div class="bg-card p-8 rounded-2xl border border-gray-800 w-full max-w-md shadow-2xl">
+            <div class="flex flex-col items-center mb-8">
+                <div class="p-3 bg-accent rounded-xl mb-4">
+                    <i data-lucide="wrench" class="text-black w-8 h-8"></i>
+                </div>
+                <h1 class="text-2xl font-bold uppercase tracking-widest text-center">Herramientas<span class="accent-color">Libres</span></h1>
+                <p class="text-gray-500 text-sm mt-2">Gestión de Comercio</p>
+            </div>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-500 uppercase font-bold">Email</label>
+                    <input type="email" id="login-email" required class="w-full p-3 rounded-lg outline-none" placeholder="tu@email.com">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500 uppercase font-bold">Contraseña</label>
+                    <input type="password" id="login-password" required class="w-full p-3 rounded-lg outline-none" placeholder="••••••••">
+                </div>
+                <button type="submit" id="login-btn" class="btn-primary w-full py-4 rounded-xl mt-4 flex justify-center items-center gap-2">
+                    <span id="login-text">Ingresar al Sistema</span>
+                    <div id="login-loader" class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
+                </button>
+            </form>
+            <div id="login-error" class="mt-4 text-red-500 text-sm text-center hidden"></div>
+        </div>
+    </div>
 
     <!-- Navegación -->
     <nav class="bg-card border-b border-gray-800 sticky top-0 z-50">
@@ -64,7 +97,13 @@
                     <button onclick="switchTab('historial')" class="nav-link py-5 px-1 text-sm font-medium transition-colors" id="tab-historial">Historial</button>
                     <button onclick="switchTab('contabilidad')" class="nav-link py-5 px-1 text-sm font-medium transition-colors" id="tab-contabilidad">Contabilidad</button>
                 </div>
-                <div id="auth-status" class="text-[10px] text-gray-500 italic">Conectando...</div>
+                <div class="flex items-center">
+                    <!-- Elemento restaurado para evitar el error de JS -->
+                    <span id="auth-status" class="hidden md:inline text-[10px] text-gray-500 italic mr-4">Conectando...</span>
+                    <button onclick="signOutUser()" class="text-gray-500 hover:text-red-500 transition-colors">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </nav>
@@ -305,18 +344,12 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, increment, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        // --- GLOBAL VARIABLES & STATE ---
-        let products = [], suppliers = [], historyRaw = [], customers = [], expenses = [], cart = [], saleType = 'presencial';
-        let selectedCustomerId = null;
-        let db = null;
-        let auth = null;
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'herramientas-libres-pro';
-        
-        // Configuración por defecto (Placeholder para el usuario)
+        // =========================================================================
+        // 1. CONFIGURACIÓN DE FIREBASE (OBLIGATORIO: PEGA TUS CLAVES AQUÍ)
+        // =========================================================================
         let firebaseConfig = {
             apiKey: "AIzaSyDsh5-ZzwjO98S1zIXUx6Sw2ICd5SwiHpM",
   authDomain: "herramientaslibres-61449.firebaseapp.com",
@@ -328,16 +361,111 @@
 
         // Si estamos en el Canvas, usamos la configuración inyectada automáticamente
         if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-            try {
-                firebaseConfig = JSON.parse(__firebase_config);
-            } catch (e) {
-                console.warn("No se pudo parsear la config de Firebase del entorno.");
-            }
+            try { firebaseConfig = JSON.parse(__firebase_config); } catch (e) { }
         }
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'herramientas-libres-pro';
+        let db, auth;
+        let products = [], suppliers = [], historyRaw = [], customers = [], expenses = [], cart = [], saleType = 'presencial';
+        let selectedCustomerId = null;
 
         const fmt = (n) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
 
-        // --- UI & RENDER FUNCTIONS ---
+        // --- INICIO DE APLICACIÓN ---
+        const startApp = async () => {
+            // Inicializar Firebase solo si hay claves
+            const hasValidKeys = firebaseConfig.apiKey && firebaseConfig.apiKey !== "TU_API_KEY_AQUI";
+            
+            if (!hasValidKeys) {
+                const statusEl = document.getElementById('auth-status');
+                if (statusEl) statusEl.innerText = 'FALTAN CLAVES';
+                const loginErrEl = document.getElementById('login-error');
+                if (loginErrEl) {
+                    loginErrEl.innerText = "Falta configurar las claves de Firebase en el código.";
+                    loginErrEl.classList.remove('hidden');
+                }
+                return;
+            }
+
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+
+            // Escuchar estado de autenticación
+            onAuthStateChanged(auth, (user) => {
+                const statusEl = document.getElementById('auth-status');
+                const loginOverlay = document.getElementById('login-overlay');
+                
+                if (user) {
+                    if (loginOverlay) loginOverlay.classList.add('hidden');
+                    if (statusEl) statusEl.innerText = 'En Línea';
+                    initListeners();
+                    switchTab('stock');
+                } else {
+                    if (loginOverlay) loginOverlay.classList.remove('hidden');
+                    if (statusEl) statusEl.innerText = 'Desconectado';
+                }
+            });
+
+            // Manejar formulario de login
+            const loginForm = document.getElementById('login-form');
+            if (loginForm) {
+                loginForm.onsubmit = async (e) => {
+                    e.preventDefault();
+                    const email = document.getElementById('login-email').value;
+                    const pass = document.getElementById('login-password').value;
+                    const errorEl = document.getElementById('login-error');
+                    const btn = document.getElementById('login-btn');
+                    const loader = document.getElementById('login-loader');
+                    const text = document.getElementById('login-text');
+
+                    if (errorEl) errorEl.classList.add('hidden');
+                    if (btn) btn.disabled = true;
+                    if (loader) loader.classList.remove('hidden');
+                    if (text) text.classList.add('hidden');
+
+                    try {
+                        await signInWithEmailAndPassword(auth, email, pass);
+                    } catch (err) {
+                        if (errorEl) {
+                            errorEl.innerText = "Error: Usuario o contraseña incorrectos.";
+                            errorEl.classList.remove('hidden');
+                        }
+                        if (btn) btn.disabled = false;
+                        if (loader) loader.classList.add('hidden');
+                        if (text) text.classList.remove('hidden');
+                    }
+                };
+            }
+            
+            // Vincular otros formularios
+            const formP = document.getElementById('form-product'); if(formP) formP.onsubmit = handleProductSubmit;
+            const formS = document.getElementById('form-supplier'); if(formS) formS.onsubmit = handleSupplierSubmit;
+            const formE = document.getElementById('form-expense'); if(formE) formE.onsubmit = handleExpenseSubmit;
+
+            lucide.createIcons();
+        };
+
+        window.signOutUser = () => {
+            if(confirm("¿Cerrar sesión?")) signOut(auth);
+        };
+
+        function initListeners() {
+            if (!db || !auth.currentUser) return;
+            const pPath = collection(db, 'artifacts', appId, 'public', 'data', 'products');
+            const sPath = collection(db, 'artifacts', appId, 'public', 'data', 'suppliers');
+            const hPath = collection(db, 'artifacts', appId, 'public', 'data', 'history');
+            const cPath = collection(db, 'artifacts', appId, 'public', 'data', 'customers');
+            const ePath = collection(db, 'artifacts', appId, 'public', 'data', 'expenses');
+
+            onSnapshot(pPath, sn => { products = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderStock(); window.updateDatalists(); });
+            onSnapshot(sPath, sn => { suppliers = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderSuppliers(); window.updateSupplierSelect(); });
+            onSnapshot(hPath, sn => { historyRaw = sn.docs.map(d => ({id:d.id, ...d.data()})); window.filterHistory(); window.calculateStats(); });
+            onSnapshot(cPath, sn => { customers = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderCustomers(); });
+            onSnapshot(ePath, sn => { expenses = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderExpenses(); window.calculateStats(); });
+        }
+
+        // --- RENDERIZADO Y UI ---
         window.renderStock = () => {
             const sl = document.getElementById('stock-list');
             if(!sl) return;
@@ -357,16 +485,19 @@
             if (!el) return;
             const term = el.value.toLowerCase();
             const filtered = customers.filter(c => c.name.toLowerCase().includes(term) || c.phone?.includes(term));
-            document.getElementById('customer-list').innerHTML = filtered.map(c => `
-                <div class="bg-card p-6 rounded-xl border border-gray-800 relative group">
-                    <button onclick="viewClientHistory('${c.id}', '${c.name}')" class="absolute top-4 right-4 text-amber-500 hover:scale-110 transition-all"><i data-lucide="history" class="w-5 h-5"></i></button>
-                    <h4 class="text-lg font-bold mb-2">${c.name}</h4>
-                    <div class="text-xs text-gray-400 space-y-1">
-                        <p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${c.phone || 'S/T'}</p>
-                        <p><i data-lucide="mail" class="inline w-3 h-3 mr-1"></i> ${c.email || 'S/E'}</p>
+            const cl = document.getElementById('customer-list');
+            if (cl) {
+                cl.innerHTML = filtered.map(c => `
+                    <div class="bg-card p-6 rounded-xl border border-gray-800 relative group">
+                        <button onclick="viewClientHistory('${c.id}', '${c.name}')" class="absolute top-4 right-4 text-amber-500 hover:scale-110 transition-all"><i data-lucide="history" class="w-5 h-5"></i></button>
+                        <h4 class="text-lg font-bold mb-2">${c.name}</h4>
+                        <div class="text-xs text-gray-400 space-y-1">
+                            <p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${c.phone || 'S/T'}</p>
+                            <p><i data-lucide="mail" class="inline w-3 h-3 mr-1"></i> ${c.email || 'S/E'}</p>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            }
             lucide.createIcons();
         };
 
@@ -396,27 +527,10 @@
             const sBal = document.getElementById('stat-balance'); if(sBal) sBal.innerText = fmt(totalSales - totalExpenses);
         };
 
-        window.updateSupplierSelect = () => {
-            const s = document.getElementById('p-supplier'); const v = s?.value;
-            if (s) {
-                s.innerHTML = '<option value="">Seleccionar</option>' + suppliers.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
-                s.value = v;
-            }
-        };
-
-        window.updateDatalists = () => {
-            const ns = [...new Set(products.map(p => p.name))];
-            const bs = [...new Set(products.map(p => p.brand))];
-            const nEl = document.getElementById('list-product-names');
-            const bEl = document.getElementById('list-brands');
-            if (nEl) nEl.innerHTML = ns.map(n => `<option value="${n}">`).join('');
-            if (bEl) bEl.innerHTML = bs.map(b => `<option value="${b}">`).join('');
-        };
-
-        // --- FORM HANDLERS ---
-        const handleProductSubmit = async (e) => {
+        // --- MANEJO DE FORMULARIOS ---
+        async function handleProductSubmit(e) {
             e.preventDefault();
-            if (!db || !auth?.currentUser) return showToast("No autenticado o sin config");
+            if (!db || !auth.currentUser) return showToast("No autenticado");
             const id = document.getElementById('p-id').value;
             const data = {
                 name: document.getElementById('p-name').value,
@@ -429,108 +543,41 @@
                 image: document.getElementById('p-image-data').value,
                 updatedAt: serverTimestamp()
             };
-            try {
-                if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), data);
-                else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { ...data, createdAt: serverTimestamp() });
-                closeModal('modal-product'); showToast("Producto guardado");
-            } catch(err) { showToast("Error al guardar"); }
-        };
-
-        const handleSupplierSubmit = async (e) => {
-            e.preventDefault();
-            if (!db || !auth?.currentUser) return;
-            const id = document.getElementById('s-id').value;
-            const data = {
-                name: document.getElementById('s-name').value,
-                whatsapp: document.getElementById('s-whatsapp').value,
-                phone: document.getElementById('s-phone').value,
-                email: document.getElementById('s-email').value,
-                address: document.getElementById('s-address').value,
-                city: document.getElementById('s-city').value,
-                country: document.getElementById('s-country').value,
-                updatedAt: serverTimestamp()
-            };
-            try {
-                if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id), data);
-                else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), { ...data, createdAt: serverTimestamp() });
-                closeModal('modal-supplier'); showToast("Proveedor guardado");
-            } catch(err) { showToast("Error al guardar"); }
-        };
-
-        const handleExpenseSubmit = async (e) => {
-            e.preventDefault();
-            if (!db || !auth?.currentUser) return;
-            const id = document.getElementById('e-id').value;
-            const data = { 
-                concept: document.getElementById('e-concept').value, 
-                category: document.getElementById('e-category').value, 
-                amount: parseFloat(document.getElementById('e-amount').value), 
-                date: serverTimestamp() 
-            };
-            try {
-                if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id), data);
-                else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), data);
-                closeModal('modal-expense'); showToast("Egreso registrado");
-            } catch(err) { showToast("Error al guardar"); }
-        };
-
-        // --- INICIALIZACIÓN ---
-        const startApp = async () => {
-            // Verificamos si hay configuración válida antes de intentar conectar
-            const isDefault = firebaseConfig.apiKey === "TU_API_KEY_AQUI";
-            
-            if (isDefault) {
-                document.getElementById('auth-status').innerText = 'ESPERANDO CLAVES DE FIREBASE...';
-                console.info("Por favor, reemplaza el objeto 'firebaseConfig' con tus claves reales para habilitar la persistencia.");
-            } else {
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                try {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                } catch (err) {
-                    console.error("Auth error:", err);
-                }
-
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        document.getElementById('auth-status').innerText = 'En Línea';
-                        initListeners();
-                    } else {
-                        document.getElementById('auth-status').innerText = 'Sin Sesión';
-                    }
-                });
-            }
-            
-            const fP = document.getElementById('form-product'); if(fP) fP.onsubmit = handleProductSubmit;
-            const fS = document.getElementById('form-supplier'); if(fS) fS.onsubmit = handleSupplierSubmit;
-            const fE = document.getElementById('form-expense'); if(fE) fE.onsubmit = handleExpenseSubmit;
-
-            setSaleType('presencial');
-            setTimeout(() => switchTab('stock'), 300);
-        };
-
-        function initListeners() {
-            if (!db) return;
-            const pPath = collection(db, 'artifacts', appId, 'public', 'data', 'products');
-            const sPath = collection(db, 'artifacts', appId, 'public', 'data', 'suppliers');
-            const hPath = collection(db, 'artifacts', appId, 'public', 'data', 'history');
-            const cPath = collection(db, 'artifacts', appId, 'public', 'data', 'customers');
-            const ePath = collection(db, 'artifacts', appId, 'public', 'data', 'expenses');
-
-            onSnapshot(pPath, sn => { products = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderStock(); window.updateDatalists(); });
-            onSnapshot(sPath, sn => { suppliers = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderSuppliers(); window.updateSupplierSelect(); });
-            onSnapshot(hPath, sn => { historyRaw = sn.docs.map(d => ({id:d.id, ...d.data()})); window.filterHistory(); window.calculateStats(); });
-            onSnapshot(cPath, sn => { customers = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderCustomers(); });
-            onSnapshot(ePath, sn => { expenses = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderExpenses(); window.calculateStats(); });
+            const col = collection(db, 'artifacts', appId, 'public', 'data', 'products');
+            if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), data);
+            else await addDoc(col, { ...data, createdAt: serverTimestamp() });
+            closeModal('modal-product'); showToast("Producto guardado");
         }
 
-        // --- NAVIGATION & MODALS ---
+        async function handleSupplierSubmit(e) {
+            e.preventDefault();
+            if (!db || !auth.currentUser) return;
+            const id = document.getElementById('s-id').value;
+            const data = {
+                name: document.getElementById('s-name').value, whatsapp: document.getElementById('s-whatsapp').value,
+                phone: document.getElementById('s-phone').value, email: document.getElementById('s-email').value,
+                address: document.getElementById('s-address').value, city: document.getElementById('s-city').value,
+                country: document.getElementById('s-country').value, updatedAt: serverTimestamp()
+            };
+            if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id), data);
+            else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), { ...data, createdAt: serverTimestamp() });
+            closeModal('modal-supplier'); showToast("Proveedor guardado");
+        }
+
+        async function handleExpenseSubmit(e) {
+            e.preventDefault();
+            if (!db || !auth.currentUser) return;
+            const id = document.getElementById('e-id').value;
+            const data = { 
+                concept: document.getElementById('e-concept').value, category: document.getElementById('e-category').value, 
+                amount: parseFloat(document.getElementById('e-amount').value), date: serverTimestamp() 
+            };
+            if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id), data);
+            else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), data);
+            closeModal('modal-expense'); showToast("Egreso registrado");
+        }
+
+        // --- NAVEGACIÓN Y EXTRAS ---
         window.switchTab = (id) => {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
             const target = document.getElementById(`sec-${id}`);
@@ -568,72 +615,17 @@
                     ctx.drawImage(i, 0, 0, c.width, c.height);
                     const b = c.toDataURL('image/jpeg', 0.7);
                     document.getElementById('p-image-data').value = b;
-                    document.getElementById('image-preview-container').innerHTML = `<img src="${b}" class="w-full h-full object-cover">`;
+                    const picContainer = document.getElementById('image-preview-container');
+                    if (picContainer) picContainer.innerHTML = `<img src="${b}" class="w-full h-full object-cover">`;
                 };
                 i.src = ev.target.result;
             };
             r.readAsDataURL(f);
         };
 
-        window.editProduct = (p) => {
-            document.getElementById('p-id').value = p.id;
-            document.getElementById('p-name').value = p.name;
-            document.getElementById('p-brand').value = p.brand;
-            document.getElementById('p-code').value = p.code;
-            document.getElementById('p-supplier').value = p.supplierId || '';
-            document.getElementById('p-stock').value = p.stock;
-            document.getElementById('p-cost').value = p.cost;
-            document.getElementById('p-price').value = p.price;
-            document.getElementById('p-image-data').value = p.image || '';
-            document.getElementById('image-preview-container').innerHTML = p.image ? `<img src="${p.image}" class="w-full h-full object-cover">` : '';
-            openModal('modal-product');
-        };
-
-        window.deleteProduct = async (id) => { if(confirm("¿Eliminar herramienta?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id)); };
-
-        window.editSupplier = (s) => {
-            document.getElementById('s-id').value = s.id;
-            document.getElementById('s-name').value = s.name;
-            document.getElementById('s-whatsapp').value = s.whatsapp;
-            document.getElementById('s-phone').value = s.phone;
-            document.getElementById('s-email').value = s.email;
-            document.getElementById('s-address').value = s.address;
-            document.getElementById('s-city').value = s.city;
-            document.getElementById('s-country').value = s.country;
-            openModal('modal-supplier');
-        };
-
-        window.deleteSupplier = async (id) => { if(confirm("¿Eliminar proveedor?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id)); };
-
-        window.setSaleType = (type) => {
-            saleType = type;
-            const p = document.getElementById('btn-presencial'), o = document.getElementById('btn-online');
-            if(p) p.className = type === 'presencial' ? 'py-2 rounded border border-amber-500 text-xs bg-amber-500/10 text-amber-500 font-bold' : 'py-2 rounded border border-gray-700 text-xs bg-gray-800 text-white';
-            if(o) o.className = type === 'online' ? 'py-2 rounded border border-amber-500 text-xs bg-amber-500/10 text-amber-500 font-bold' : 'py-2 rounded border border-gray-700 text-xs bg-gray-800 text-white';
-        };
-
-        window.suggestCustomers = (term) => {
-            const sug = document.getElementById('customer-suggestions');
-            const fields = document.getElementById('new-customer-fields');
-            if(!term) { sug.classList.add('hidden'); fields.classList.add('hidden'); return; }
-            const matches = customers.filter(c => c.name.toLowerCase().includes(term.toLowerCase()) || c.phone?.includes(term));
-            if(matches.length > 0) {
-                sug.innerHTML = matches.map(c => `<div onclick="selectCustomer('${c.id}', '${c.name}')" class="p-2 hover:bg-amber-500/20 cursor-pointer text-xs border-b border-gray-700">${c.name} (${c.phone || 'S/T'})</div>`).join('');
-                sug.classList.remove('hidden'); fields.classList.add('hidden');
-            } else {
-                sug.classList.add('hidden'); fields.classList.remove('hidden');
-            }
-        };
-
-        window.selectCustomer = (id, name) => {
-            selectedCustomerId = id;
-            document.getElementById('sale-customer-search').value = name;
-            document.getElementById('customer-suggestions').classList.add('hidden');
-            document.getElementById('new-customer-fields').classList.add('hidden');
-        };
-
+        // --- VENTAS ---
         window.processSale = async () => {
-            if(!db || !auth?.currentUser) return showToast("Sin conexión a base de datos");
+            if(!db || !auth.currentUser) return showToast("Sin conexión");
             if(cart.length === 0) return showToast("Carrito vacío");
             const searchVal = document.getElementById('sale-customer-search').value.trim();
             if(!searchVal) return showToast("Identifique al cliente");
@@ -663,11 +655,10 @@
                     type: 'venta', saleMode: saleType, customerId, customerName, detail, amount: total, items: cart, date: serverTimestamp()
                 });
 
-                // Generar PDF
                 generateInvoice(cart, total, customerName);
-
-                showToast("Venta Exitosa y PDF generado!"); cart = []; renderCart();
-                document.getElementById('sale-customer-search').value = ''; document.getElementById('c-phone').value = ''; document.getElementById('c-email').value = '';
+                showToast("Venta Exitosa!"); cart = []; renderCart();
+                const sCustInp = document.getElementById('sale-customer-search');
+                if (sCustInp) sCustInp.value = '';
                 selectedCustomerId = null;
             } catch(e) { showToast("Error al procesar"); }
         };
@@ -681,11 +672,10 @@
             doc.text(`Cliente: ${customer}`, 150, 25);
             doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 150, 32);
 
-            const tableData = items.map(i => [i.name, i.brand, i.qty, fmt(i.price), fmt(i.price * i.qty)]);
             doc.autoTable({
                 startY: 50,
                 head: [['Producto', 'Marca', 'Cant.', 'Unitario', 'Subtotal']],
-                body: tableData,
+                body: items.map(i => [i.name, i.brand, i.qty, fmt(i.price), fmt(i.price * i.qty)]),
                 theme: 'grid',
                 headStyles: { fillColor: [245, 158, 11], textColor: [0, 0, 0] }
             });
@@ -694,27 +684,7 @@
             doc.save(`Venta_${customer.replace(/\s+/g, '_')}.pdf`);
         }
 
-        window.viewClientHistory = (id, name) => {
-            const clientSales = historyRaw.filter(h => h.customerId === id);
-            document.getElementById('client-history-name').innerText = `Compras de ${name}`;
-            document.getElementById('client-history-content').innerHTML = clientSales.length ? clientSales.map(h => `
-                <div class="mb-4 p-4 bg-black/30 rounded border border-gray-800">
-                    <div class="flex justify-between text-xs mb-1"><span class="text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleDateString() : 'Reciente'}</span><span class="font-bold accent-color uppercase">${h.saleMode}</span></div>
-                    <p class="text-sm">${h.detail}</p><p class="text-right font-bold mt-2">${fmt(h.amount)}</p>
-                </div>
-            `).join('') : '<p class="text-center italic text-gray-500">Sin compras registradas</p>';
-            openModal('modal-client-history');
-        };
-
-        window.editExpense = (e) => {
-            document.getElementById('e-id').value = e.id; document.getElementById('e-concept').value = e.concept;
-            document.getElementById('e-category').value = e.category; document.getElementById('e-amount').value = e.amount;
-            openModal('modal-expense');
-        };
-        window.deleteExpense = async (id) => { if(confirm("¿Eliminar gasto?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id)); };
-
-        function showToast(m) { const t = document.getElementById('toast'); if(t){ t.innerText = m; t.classList.remove('opacity-0'); setTimeout(() => t.classList.add('opacity-0'), 3000); } }
-        
+        // Helpers de Ventas
         window.addToCart = (p) => {
             const it = cart.find(i => i.id === p.id);
             if(it) { if(it.qty < p.stock) it.qty++; else return showToast("Stock insuficiente"); }
@@ -728,8 +698,8 @@
             if(cart.length === 0) c.innerHTML = '<div class="text-gray-500 text-center py-8 italic text-xs uppercase tracking-widest">Carrito vacío</div>';
             else c.innerHTML = cart.map(i => `<div class="flex justify-between items-center bg-black/30 p-3 rounded-lg border border-gray-800"><div><p class="text-xs font-bold uppercase">${i.name}</p><p class="text-[10px] text-gray-500">${i.brand} | ${fmt(i.price)} x ${i.qty}</p></div><div class="flex items-center gap-3"><span class="font-bold accent-color text-sm">${fmt(i.price * i.qty)}</span><button onclick="removeFromCart('${i.id}')" class="text-red-400"><i data-lucide="x-circle" class="w-4 h-4"></i></button></div></div>`).join('');
             const t = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            const ct = document.getElementById('cart-total'); if(ct) ct.innerText = fmt(t);
-            const cc = document.getElementById('cart-count'); if(cc) cc.innerText = cart.length;
+            const totalEl = document.getElementById('cart-total'); if(totalEl) totalEl.innerText = fmt(t);
+            const countEl = document.getElementById('cart-count'); if(countEl) countEl.innerText = cart.length;
             lucide.createIcons();
         }
 
@@ -764,9 +734,34 @@
             if(hl) hl.innerHTML = filtered.sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)).map(h => `<tr class="border-b border-gray-800 text-xs"><td class="p-4 text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-700">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-gray-300">${h.customerName || 'Mostrador'}</td><td class="p-4 text-gray-400 max-w-xs truncate">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join('');
         };
 
-        // --- START APP ON WINDOW LOAD ---
-        window.addEventListener('load', startApp);
+        // --- OTROS HELPERS ---
+        function showToast(m) { const t = document.getElementById('toast'); if(t){ t.innerText = m; t.classList.remove('opacity-0'); setTimeout(() => t.classList.add('opacity-0'), 3000); } }
+        window.setSaleType = (t) => { 
+            saleType = t; 
+            const bP = document.getElementById('btn-presencial'); if(bP) bP.classList.toggle('border-amber-500', t === 'presencial'); 
+            const bO = document.getElementById('btn-online'); if(bO) bO.classList.toggle('border-amber-500', t === 'online'); 
+        };
+        window.updateSupplierSelect = () => { const s = document.getElementById('p-supplier'); if (s) s.innerHTML = '<option value="">Seleccionar</option>' + suppliers.map(x => `<option value="${x.id}">${x.name}</option>`).join(''); };
+        window.updateDatalists = () => {
+            const nEl = document.getElementById('list-product-names'); const bEl = document.getElementById('list-brands');
+            if (nEl) nEl.innerHTML = [...new Set(products.map(p => p.name))].map(n => `<option value="${n}">`).join('');
+            if (bEl) bEl.innerHTML = [...new Set(products.map(p => p.brand))].map(b => `<option value="${b}">`).join('');
+        };
 
+        window.editProduct = (p) => {
+            const pId = document.getElementById('p-id'); if(pId) pId.value = p.id; 
+            const pName = document.getElementById('p-name'); if(pName) pName.value = p.name;
+            const pBrand = document.getElementById('p-brand'); if(pBrand) pBrand.value = p.brand; 
+            const pCode = document.getElementById('p-code'); if(pCode) pCode.value = p.code;
+            const pSup = document.getElementById('p-supplier'); if(pSup) pSup.value = p.supplierId || ''; 
+            const pStock = document.getElementById('p-stock'); if(pStock) pStock.value = p.stock;
+            const pCost = document.getElementById('p-cost'); if(pCost) pCost.value = p.cost; 
+            const pPrice = document.getElementById('p-price'); if(pPrice) pPrice.value = p.price;
+            const pImg = document.getElementById('p-image-data'); if(pImg) pImg.value = p.image || ''; 
+            openModal('modal-product');
+        };
+
+        window.addEventListener('load', startApp);
     </script>
 </body>
 </html>
