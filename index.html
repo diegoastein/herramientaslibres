@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herramientas Libres - Gestión de Comercio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #121212; color: #e0e0e0; }
+        .bg-card { background-color: #1e1e1e; }
+        .accent-color { color: #f59e0b; }
+        .bg-accent { background-color: #f59e0b; }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #121212; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
+
+        .btn-primary { 
+            background-color: #f59e0b; 
+            color: #000; 
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        .btn-primary:hover { background-color: #d97706; transform: translateY(-1px); }
+        
+        input, select, textarea {
+            background-color: #2d2d2d !important;
+            border: 1px solid #444 !important;
+            color: white !important;
+        }
+        
+        .tab-active {
+            border-bottom: 2px solid #f59e0b;
+            color: #f59e0b;
+        }
+
+        .modal-scroll { max-height: 80vh; overflow-y: auto; }
+    </style>
+</head>
+<body class="min-h-screen pb-20 md:pb-0">
+
+    <!-- Navegación -->
+    <nav class="bg-card border-b border-gray-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <div class="p-2 bg-accent rounded-lg">
+                        <i data-lucide="wrench" class="text-black w-6 h-6"></i>
+                    </div>
+                    <span class="text-xl font-bold tracking-tight uppercase">Herramientas<span class="accent-color">Libres</span></span>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <button onclick="switchTab('stock')" class="nav-link py-5 px-1 text-sm font-medium transition-colors" id="tab-stock">Stock</button>
+                    <button onclick="switchTab('proveedores')" class="nav-link py-5 px-1 text-sm font-medium transition-colors" id="tab-proveedores">Proveedores</button>
+                    <button onclick="switchTab('ventas')" class="nav-link py-5 px-1 text-sm font-medium transition-colors" id="tab-ventas">Ventas</button>
+                    <button onclick="switchTab('clientes')" class="nav-link py-5 px-1 text-sm font-medium transition-colors" id="tab-clientes">Clientes</button>
+                    <button onclick="switchTab('historial')" class="nav-link py-5 px-1 text-sm font-medium transition-colors" id="tab-historial">Historial</button>
+                    <button onclick="switchTab('contabilidad')" class="nav-link py-5 px-1 text-sm font-medium transition-colors" id="tab-contabilidad">Contabilidad</button>
+                </div>
+                <div id="auth-status" class="text-[10px] text-gray-500 italic">Conectando...</div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Navegación Móvil -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-gray-800 flex justify-around py-2 z-50">
+        <button onclick="switchTab('stock')" class="flex flex-col items-center gap-1"><i data-lucide="package" class="w-5 h-5"></i><span class="text-[9px]">Stock</span></button>
+        <button onclick="switchTab('ventas')" class="flex flex-col items-center gap-1"><i data-lucide="shopping-cart" class="w-5 h-5"></i><span class="text-[9px]">Ventas</span></button>
+        <button onclick="switchTab('clientes')" class="flex flex-col items-center gap-1"><i data-lucide="users" class="w-5 h-5"></i><span class="text-[9px]">Clie</span></button>
+        <button onclick="switchTab('contabilidad')" class="flex flex-col items-center gap-1"><i data-lucide="bar-chart-3" class="w-5 h-5"></i><span class="text-[9px]">Conta</span></button>
+    </div>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-8">
+        
+        <!-- SECCIÓN: STOCK -->
+        <section id="sec-stock" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Inventario</h2>
+                <button onclick="openModal('modal-product')" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2"><i data-lucide="plus" class="w-4 h-4"></i> Nuevo</button>
+            </div>
+            <div class="bg-card rounded-xl border border-gray-800 overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-black/50 border-b border-gray-800 text-xs uppercase text-gray-400">
+                        <tr><th class="p-4">Imagen</th><th class="p-4">Producto</th><th class="p-4">Marca</th><th class="p-4">Stock</th><th class="p-4">Precio</th><th class="p-4">Acciones</th></tr>
+                    </thead>
+                    <tbody id="stock-list"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECCIÓN: PROVEEDORES -->
+        <section id="sec-proveedores" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Proveedores</h2>
+                <button onclick="openModal('modal-supplier')" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2"><i data-lucide="user-plus" class="w-4 h-4"></i> Nuevo</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="supplier-list"></div>
+        </section>
+
+        <!-- SECCIÓN: VENTAS -->
+        <section id="sec-ventas" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2">
+                    <div class="bg-card p-6 rounded-xl border border-gray-800 mb-6">
+                        <div class="relative">
+                            <input type="text" id="search-product" placeholder="Buscar herramienta por nombre, marca o código..." class="w-full p-4 rounded-lg outline-none pl-12 text-lg">
+                            <i data-lucide="search" class="absolute left-4 top-4.5 text-gray-500"></i>
+                        </div>
+                        <div id="search-results" class="mt-4 space-y-2"></div>
+                    </div>
+                </div>
+
+                <div class="bg-card p-6 rounded-xl border border-gray-800 h-fit sticky top-24">
+                    <h2 class="text-xl font-bold mb-4 flex justify-between">Carrito <span id="cart-count" class="text-xs bg-accent text-black px-2 py-1 rounded-full">0</span></h2>
+                    <div id="cart-items" class="space-y-3 mb-6"></div>
+                    
+                    <div class="border-t border-gray-800 pt-4 space-y-4">
+                        <div class="space-y-3">
+                            <label class="block text-[10px] text-gray-500 uppercase font-bold">Tipo de Venta</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="setSaleType('presencial')" id="btn-presencial" class="py-2 rounded border border-gray-700 text-xs bg-gray-800 text-white transition-all">Presencial</button>
+                                <button onclick="setSaleType('online')" id="btn-online" class="py-2 rounded border border-gray-700 text-xs bg-gray-800 text-white transition-all">Online</button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 gap-3">
+                            <div>
+                                <label class="block text-[10px] text-gray-500 uppercase font-bold">Cliente (Nombre o Tel)</label>
+                                <input type="text" id="sale-customer-search" placeholder="Juan Pérez / 11..." class="w-full p-2 text-sm rounded outline-none" oninput="suggestCustomers(this.value)">
+                                <div id="customer-suggestions" class="bg-gray-800 rounded mt-1 hidden max-h-40 overflow-y-auto border border-gray-700"></div>
+                            </div>
+                            <div id="new-customer-fields" class="grid grid-cols-2 gap-2 hidden">
+                                <input type="text" id="c-phone" placeholder="Celular" class="w-full p-2 text-xs rounded outline-none">
+                                <input type="email" id="c-email" placeholder="Email" class="w-full p-2 text-xs rounded outline-none">
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-2xl font-bold text-white pt-2"><span>Total</span><span id="cart-total">$ 0,00</span></div>
+                    </div>
+                    <button onclick="processSale()" class="btn-primary w-full mt-6 py-4 rounded-lg flex items-center justify-center gap-2">
+                        <i data-lucide="check-square" class="w-5 h-5"></i> Finalizar Venta
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN: CLIENTES -->
+        <section id="sec-clientes" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Base de Clientes</h2>
+                <div class="relative w-64">
+                    <input type="text" id="filter-clients" placeholder="Buscar cliente..." class="w-full p-2 rounded text-sm outline-none pl-8" oninput="renderCustomers()">
+                    <i data-lucide="search" class="absolute left-2 top-2.5 w-4 h-4 text-gray-500"></i>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="customer-list"></div>
+        </section>
+
+        <!-- SECCIÓN: HISTORIAL -->
+        <section id="sec-historial" class="tab-content hidden">
+            <h2 class="text-2xl font-bold mb-6">Historial de Ventas</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-card p-4 rounded-xl border border-gray-800">
+                <input type="date" id="hist-from" class="w-full p-2 rounded text-sm">
+                <input type="date" id="hist-to" class="w-full p-2 rounded text-sm">
+                <input type="text" id="hist-search" placeholder="Buscar producto o cliente..." class="w-full p-2 rounded text-sm" oninput="filterHistory()">
+                <select id="hist-type" class="w-full p-2 rounded text-sm" onchange="filterHistory()">
+                    <option value="">Todos los tipos</option>
+                    <option value="presencial">Presencial</option>
+                    <option value="online">Online</option>
+                </select>
+            </div>
+            <div class="bg-card rounded-xl border border-gray-800 overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-black/50 border-b border-gray-800 text-xs uppercase">
+                        <tr><th class="p-4">Fecha</th><th class="p-4">Tipo</th><th class="p-4">Cliente</th><th class="p-4">Artículos</th><th class="p-4">Total</th></tr>
+                    </thead>
+                    <tbody id="history-list"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECCIÓN: CONTABILIDAD -->
+        <section id="sec-contabilidad" class="tab-content hidden">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-card p-6 rounded-xl border-l-4 border-green-500">
+                    <p class="text-gray-400 text-xs uppercase font-bold">Ventas Totales</p>
+                    <h3 id="stat-sales" class="text-3xl font-bold text-white">$ 0,00</h3>
+                </div>
+                <div class="bg-card p-6 rounded-xl border-l-4 border-red-500">
+                    <p class="text-gray-400 text-xs uppercase font-bold">Gastos / Inversiones</p>
+                    <h3 id="stat-expenses" class="text-3xl font-bold text-white">$ 0,00</h3>
+                </div>
+                <div class="bg-card p-6 rounded-xl border-l-4 border-amber-500">
+                    <p class="text-gray-400 text-xs uppercase font-bold">Balance Neto</p>
+                    <h3 id="stat-balance" class="text-3xl font-bold text-white">$ 0,00</h3>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Registro de Egresos</h3>
+                <button onclick="openModal('modal-expense')" class="btn-primary px-4 py-2 rounded-lg text-sm flex items-center gap-2"><i data-lucide="minus-circle" class="w-4 h-4"></i> Nuevo Gasto</button>
+            </div>
+            <div class="bg-card rounded-xl border border-gray-800 overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-black/50 border-b border-gray-800 text-xs uppercase">
+                        <tr><th class="p-4">Fecha</th><th class="p-4">Concepto</th><th class="p-4">Categoría</th><th class="p-4">Monto</th><th class="p-4">Acciones</th></tr>
+                    </thead>
+                    <tbody id="expense-list"></tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODALES -->
+    <datalist id="list-product-names"></datalist>
+    <datalist id="list-brands"></datalist>
+
+    <!-- MODAL: PRODUCTO -->
+    <div id="modal-product" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
+        <div class="bg-card w-full max-w-2xl rounded-2xl border border-gray-700 overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-black/20">
+                <h3 class="text-xl font-bold" id="product-modal-title">Herramienta</h3>
+                <button onclick="closeModal('modal-product')"><i data-lucide="x"></i></button>
+            </div>
+            <form id="form-product" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="hidden" id="p-id">
+                <div class="md:col-span-2"><label class="text-xs text-gray-500">Nombre</label><input type="text" id="p-name" list="list-product-names" required class="w-full p-2 rounded outline-none border border-gray-700"></div>
+                <div><label class="text-xs text-gray-500">Marca</label><input type="text" id="p-brand" list="list-brands" required class="w-full p-2 rounded outline-none border border-gray-700"></div>
+                <div><label class="text-xs text-gray-500">Código</label><input type="text" id="p-code" required class="w-full p-2 rounded outline-none border border-gray-700"></div>
+                <div><label class="text-xs text-gray-500">Proveedor</label><select id="p-supplier" class="w-full p-2 rounded outline-none border border-gray-700"><option value="">Seleccionar</option></select></div>
+                <div><label class="text-xs text-gray-500">Stock</label><input type="number" id="p-stock" required class="w-full p-2 rounded outline-none border border-gray-700"></div>
+                <div><label class="text-xs text-gray-500">Costo ($ ARS)</label><input type="number" step="0.01" id="p-cost" required class="w-full p-2 rounded outline-none border border-gray-700"></div>
+                <div><label class="text-xs text-gray-500">Venta ($ ARS)</label><input type="number" step="0.01" id="p-price" required class="w-full p-2 rounded outline-none border border-gray-700"></div>
+                <div class="md:col-span-2">
+                    <label class="text-xs text-gray-500">Imagen</label>
+                    <div class="flex items-center gap-4">
+                        <label class="flex-1 cursor-pointer bg-gray-700 p-2 rounded text-center text-xs">Subir Imagen<input type="file" id="p-file-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)"></label>
+                        <div id="image-preview-container" class="w-12 h-12 bg-black rounded border border-gray-700 flex items-center justify-center"></div>
+                    </div>
+                    <input type="hidden" id="p-image-data">
+                </div>
+                <div class="md:col-span-2 flex gap-2"><button type="submit" class="btn-primary flex-1 py-3 rounded-lg">Guardar</button><button type="button" onclick="closeModal('modal-product')" class="flex-1 bg-gray-700 py-3 rounded-lg">Cerrar</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: PROVEEDOR -->
+    <div id="modal-supplier" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
+        <div class="bg-card w-full max-w-lg rounded-2xl border border-gray-700 overflow-hidden">
+            <div class="p-6 border-b border-gray-800 flex justify-between items-center"><h3 class="text-xl font-bold" id="supplier-modal-title">Proveedor</h3><button onclick="closeModal('modal-supplier')"><i data-lucide="x"></i></button></div>
+            <form id="form-supplier" class="p-6 space-y-4">
+                <input type="hidden" id="s-id">
+                <div><label class="text-xs text-gray-500">Razón Social</label><input type="text" id="s-name" required class="w-full p-2 rounded outline-none"></div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="text-xs text-gray-500">WhatsApp</label><input type="text" id="s-whatsapp" class="w-full p-2 rounded outline-none"></div>
+                    <div><label class="text-xs text-gray-500">Teléfono</label><input type="text" id="s-phone" class="w-full p-2 rounded outline-none"></div>
+                </div>
+                <div><label class="text-xs text-gray-500">Email</label><input type="email" id="s-email" class="w-full p-2 rounded outline-none"></div>
+                <div><label class="text-xs text-gray-500">Domicilio</label><input type="text" id="s-address" class="w-full p-2 rounded outline-none"></div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="text-xs text-gray-500">Ciudad</label><input type="text" id="s-city" class="w-full p-2 rounded outline-none"></div>
+                    <div><label class="text-xs text-gray-500">País</label><input type="text" id="s-country" value="Argentina" class="w-full p-2 rounded outline-none"></div>
+                </div>
+                <div class="flex gap-2 pt-4"><button type="submit" class="btn-primary flex-1 py-3 rounded-lg">Guardar</button><button type="button" onclick="closeModal('modal-supplier')" class="flex-1 bg-gray-700 py-3 rounded-lg">Cerrar</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODALES ADICIONALES -->
+    <div id="modal-expense" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
+        <div class="bg-card w-full max-w-md rounded-2xl border border-gray-700 overflow-hidden">
+            <div class="p-6 border-b border-gray-800 flex justify-between items-center"><h3>Nuevo Egreso</h3><button onclick="closeModal('modal-expense')"><i data-lucide="x"></i></button></div>
+            <form id="form-expense" class="p-6 space-y-4">
+                <input type="hidden" id="e-id">
+                <div><label class="text-xs text-gray-500">Concepto (Ej: Luz, Internet, Compra Mercadería)</label><input type="text" id="e-concept" required class="w-full p-2 rounded outline-none"></div>
+                <div><label class="text-xs text-gray-500">Categoría</label>
+                    <select id="e-category" class="w-full p-2 rounded outline-none">
+                        <option value="Servicios">Servicios (Luz/Internet)</option>
+                        <option value="Impuestos">Impuestos</option>
+                        <option value="Mercadería">Compra de Herramientas</option>
+                        <option value="Local">Alquiler / Mantenimiento</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                </div>
+                <div><label class="text-xs text-gray-500">Monto ($)</label><input type="number" step="0.01" id="e-amount" required class="w-full p-2 rounded outline-none"></div>
+                <div class="flex gap-2 pt-4"><button type="submit" class="btn-primary flex-1 py-3 rounded-lg">Guardar Registro</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-client-history" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
+        <div class="bg-card w-full max-w-2xl rounded-2xl border border-gray-700 overflow-hidden">
+            <div class="p-6 border-b border-gray-800 flex justify-between items-center"><h3 id="client-history-name" class="font-bold">Historial</h3><button onclick="closeModal('modal-client-history')"><i data-lucide="x"></i></button></div>
+            <div class="p-6 modal-scroll" id="client-history-content"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-8 right-8 bg-accent text-black px-6 py-3 rounded-full shadow-2xl font-bold opacity-0 transition-all z-[200]"></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, increment, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'herramientas-libres-pro';
+
+        let products = [], suppliers = [], historyRaw = [], customers = [], expenses = [], cart = [], saleType = 'presencial';
+        let selectedCustomerId = null;
+
+        onAuthStateChanged(auth, (user) => { if (user) { document.getElementById('auth-status').innerText = 'En línea'; initListeners(); } });
+        const initAuth = async () => { if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token); else await signInAnonymously(auth); };
+        initAuth();
+
+        function initListeners() {
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), sn => { products = sn.docs.map(d => ({id:d.id, ...d.data()})); renderStock(); updateDatalists(); });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), sn => { suppliers = sn.docs.map(d => ({id:d.id, ...d.data()})); renderSuppliers(); updateSupplierSelect(); });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'history'), sn => { historyRaw = sn.docs.map(d => ({id:d.id, ...d.data()})); filterHistory(); calculateStats(); });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'customers'), sn => { customers = sn.docs.map(d => ({id:d.id, ...d.data()})); renderCustomers(); });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), sn => { expenses = sn.docs.map(d => ({id:d.id, ...d.data()})); renderExpenses(); calculateStats(); });
+        }
+
+        const fmt = (n) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
+
+        window.switchTab = (id) => {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            const target = document.getElementById(`sec-${id}`);
+            if (target) target.classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('tab-active'));
+            const tabBtn = document.getElementById(`tab-${id}`); 
+            if(tabBtn) tabBtn.classList.add('tab-active');
+            lucide.createIcons();
+        };
+
+        window.openModal = (id) => { 
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.remove('hidden'); 
+                el.classList.add('flex'); 
+                lucide.createIcons(); 
+            }
+        };
+        window.closeModal = (id) => { 
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.add('hidden'); 
+                el.classList.remove('flex'); 
+            }
+        };
+
+        // IMAGE HANDLER
+        window.handleImageUpload = (e) => {
+            const f = e.target.files[0];
+            if(!f) return;
+            const r = new FileReader();
+            r.onload = (ev) => {
+                const i = new Image();
+                i.onload = () => {
+                    const c = document.createElement('canvas');
+                    const w = 300; const s = w / i.width;
+                    c.width = w; c.height = i.height * s;
+                    const ctx = c.getContext('2d');
+                    ctx.drawImage(i, 0, 0, c.width, c.height);
+                    const b = c.toDataURL('image/jpeg', 0.7);
+                    document.getElementById('p-image-data').value = b;
+                    document.getElementById('image-preview-container').innerHTML = `<img src="${b}" class="w-full h-full object-cover">`;
+                };
+                i.src = ev.target.result;
+            };
+            r.readAsDataURL(f);
+        };
+
+        // PRODUCT FORMS
+        document.getElementById('form-product').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('p-id').value;
+            const data = {
+                name: document.getElementById('p-name').value,
+                brand: document.getElementById('p-brand').value,
+                code: document.getElementById('p-code').value,
+                supplierId: document.getElementById('p-supplier').value,
+                stock: parseInt(document.getElementById('p-stock').value),
+                cost: parseFloat(document.getElementById('p-cost').value),
+                price: parseFloat(document.getElementById('p-price').value),
+                image: document.getElementById('p-image-data').value,
+                updatedAt: serverTimestamp()
+            };
+            if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), data);
+            else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { ...data, createdAt: serverTimestamp() });
+            closeModal('modal-product'); showToast("Producto guardado");
+        };
+
+        window.editProduct = (p) => {
+            document.getElementById('p-id').value = p.id;
+            document.getElementById('p-name').value = p.name;
+            document.getElementById('p-brand').value = p.brand;
+            document.getElementById('p-code').value = p.code;
+            document.getElementById('p-supplier').value = p.supplierId || '';
+            document.getElementById('p-stock').value = p.stock;
+            document.getElementById('p-cost').value = p.cost;
+            document.getElementById('p-price').value = p.price;
+            document.getElementById('p-image-data').value = p.image || '';
+            document.getElementById('image-preview-container').innerHTML = p.image ? `<img src="${p.image}" class="w-full h-full object-cover">` : '';
+            openModal('modal-product');
+        };
+
+        window.deleteProduct = async (id) => { if(confirm("¿Eliminar herramienta?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id)); };
+
+        // SUPPLIER FORMS
+        document.getElementById('form-supplier').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('s-id').value;
+            const data = {
+                name: document.getElementById('s-name').value,
+                whatsapp: document.getElementById('s-whatsapp').value,
+                phone: document.getElementById('s-phone').value,
+                email: document.getElementById('s-email').value,
+                address: document.getElementById('s-address').value,
+                city: document.getElementById('s-city').value,
+                country: document.getElementById('s-country').value,
+                updatedAt: serverTimestamp()
+            };
+            if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id), data);
+            else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), { ...data, createdAt: serverTimestamp() });
+            closeModal('modal-supplier'); showToast("Proveedor guardado");
+        };
+
+        window.editSupplier = (s) => {
+            document.getElementById('s-id').value = s.id;
+            document.getElementById('s-name').value = s.name;
+            document.getElementById('s-whatsapp').value = s.whatsapp;
+            document.getElementById('s-phone').value = s.phone;
+            document.getElementById('s-email').value = s.email;
+            document.getElementById('s-address').value = s.address;
+            document.getElementById('s-city').value = s.city;
+            document.getElementById('s-country').value = s.country;
+            openModal('modal-supplier');
+        };
+
+        window.deleteSupplier = async (id) => { if(confirm("¿Eliminar proveedor?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id)); };
+
+        // VENTAS LOGIC
+        window.setSaleType = (type) => {
+            saleType = type;
+            const p = document.getElementById('btn-presencial'), o = document.getElementById('btn-online');
+            p.className = type === 'presencial' ? 'py-2 rounded border border-amber-500 text-xs bg-amber-500/10 text-amber-500' : 'py-2 rounded border border-gray-700 text-xs bg-gray-800 text-white';
+            o.className = type === 'online' ? 'py-2 rounded border border-amber-500 text-xs bg-amber-500/10 text-amber-500' : 'py-2 rounded border border-gray-700 text-xs bg-gray-800 text-white';
+        };
+
+        window.suggestCustomers = (term) => {
+            const sug = document.getElementById('customer-suggestions');
+            const fields = document.getElementById('new-customer-fields');
+            if(!term) { sug.classList.add('hidden'); fields.classList.add('hidden'); return; }
+            const matches = customers.filter(c => c.name.toLowerCase().includes(term.toLowerCase()) || c.phone?.includes(term));
+            if(matches.length > 0) {
+                sug.innerHTML = matches.map(c => `<div onclick="selectCustomer('${c.id}', '${c.name}')" class="p-2 hover:bg-amber-500/20 cursor-pointer text-xs border-b border-gray-700">${c.name} (${c.phone || 'S/T'})</div>`).join('');
+                sug.classList.remove('hidden'); fields.classList.add('hidden');
+            } else {
+                sug.classList.add('hidden'); fields.classList.remove('hidden');
+            }
+        };
+
+        window.selectCustomer = (id, name) => {
+            selectedCustomerId = id;
+            document.getElementById('sale-customer-search').value = name;
+            document.getElementById('customer-suggestions').classList.add('hidden');
+            document.getElementById('new-customer-fields').classList.add('hidden');
+        };
+
+        window.processSale = async () => {
+            if(cart.length === 0) return showToast("Carrito vacío");
+            const searchVal = document.getElementById('sale-customer-search').value.trim();
+            if(!searchVal) return showToast("Identifique al cliente");
+            try {
+                let customerId = selectedCustomerId;
+                let customerName = searchVal;
+                if(!customerId) {
+                    const existing = customers.find(c => c.name.toLowerCase() === searchVal.toLowerCase());
+                    if(existing) customerId = existing.id;
+                    else {
+                        const newC = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'customers'), {
+                            name: searchVal, phone: document.getElementById('c-phone').value, email: document.getElementById('c-email').value, createdAt: serverTimestamp()
+                        });
+                        customerId = newC.id;
+                    }
+                }
+                const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+                const detail = cart.map(i => `${i.qty}x ${i.name} [${i.brand}]`).join(', ');
+                for(const it of cart) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', it.id), { stock: increment(-it.qty) }); }
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'history'), {
+                    type: 'venta', saleMode: saleType, customerId, customerName, detail, amount: total, items: cart, date: serverTimestamp()
+                });
+                showToast("Venta Exitosa!"); cart = []; renderCart();
+                document.getElementById('sale-customer-search').value = ''; document.getElementById('c-phone').value = ''; document.getElementById('c-email').value = '';
+                selectedCustomerId = null;
+            } catch(e) { showToast("Error"); }
+        };
+
+        // CLIENTES
+        window.renderCustomers = () => {
+            const el = document.getElementById('filter-clients');
+            if (!el) return;
+            const term = el.value.toLowerCase();
+            const filtered = customers.filter(c => c.name.toLowerCase().includes(term) || c.phone?.includes(term));
+            document.getElementById('customer-list').innerHTML = filtered.map(c => `
+                <div class="bg-card p-6 rounded-xl border border-gray-800 relative group">
+                    <button onclick="viewClientHistory('${c.id}', '${c.name}')" class="absolute top-4 right-4 text-amber-500 hover:scale-110 transition-all"><i data-lucide="history" class="w-5 h-5"></i></button>
+                    <h4 class="text-lg font-bold mb-2">${c.name}</h4>
+                    <div class="text-xs text-gray-400 space-y-1">
+                        <p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${c.phone || 'S/T'}</p>
+                        <p><i data-lucide="mail" class="inline w-3 h-3 mr-1"></i> ${c.email || 'S/E'}</p>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        window.viewClientHistory = (id, name) => {
+            const clientSales = historyRaw.filter(h => h.customerId === id);
+            document.getElementById('client-history-name').innerText = `Compras de ${name}`;
+            document.getElementById('client-history-content').innerHTML = clientSales.length ? clientSales.map(h => `
+                <div class="mb-4 p-4 bg-black/30 rounded border border-gray-800">
+                    <div class="flex justify-between text-xs mb-1"><span class="text-gray-500">${h.date?.toDate().toLocaleDateString()}</span><span class="font-bold accent-color uppercase">${h.saleMode}</span></div>
+                    <p class="text-sm">${h.detail}</p><p class="text-right font-bold mt-2">${fmt(h.amount)}</p>
+                </div>
+            `).join('') : '<p class="text-center italic text-gray-500">Sin compras registradas</p>';
+            openModal('modal-client-history');
+        };
+
+        // CONTABILIDAD
+        document.getElementById('form-expense').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('e-id').value;
+            const data = { concept: document.getElementById('e-concept').value, category: document.getElementById('e-category').value, amount: parseFloat(document.getElementById('e-amount').value), date: serverTimestamp() };
+            if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id), data);
+            else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), data);
+            closeModal('modal-expense'); showToast("Gasto registrado");
+        };
+
+        function renderExpenses() {
+            document.getElementById('expense-list').innerHTML = expenses.map(e => `
+                <tr class="border-b border-gray-800 hover:bg-white/5">
+                    <td class="p-4 text-xs text-gray-500">${e.date?.toDate().toLocaleDateString() || '-'}</td>
+                    <td class="p-4 font-medium">${e.concept}</td>
+                    <td class="p-4"><span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-gray-400 uppercase">${e.category}</span></td>
+                    <td class="p-4 font-bold text-red-400">${fmt(e.amount)}</td>
+                    <td class="p-4 flex gap-2">
+                        <button onclick='editExpense(${JSON.stringify(e).replace(/'/g, "&apos;")})' class="text-gray-500 hover:text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                        <button onclick="deleteExpense('${e.id}')" class="text-gray-500 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        window.editExpense = (e) => {
+            document.getElementById('e-id').value = e.id; document.getElementById('e-concept').value = e.concept;
+            document.getElementById('e-category').value = e.category; document.getElementById('e-amount').value = e.amount;
+            openModal('modal-expense');
+        };
+        window.deleteExpense = async (id) => { if(confirm("¿Eliminar gasto?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id)); };
+
+        function calculateStats() {
+            const totalSales = historyRaw.reduce((s, h) => s + (h.amount || 0), 0);
+            const totalExpenses = expenses.reduce((s, e) => s + (e.amount || 0), 0);
+            document.getElementById('stat-sales').innerText = fmt(totalSales);
+            document.getElementById('stat-expenses').innerText = fmt(totalExpenses);
+            document.getElementById('stat-balance').innerText = fmt(totalSales - totalExpenses);
+        }
+
+        // HELPERS
+        function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.remove('opacity-0'); setTimeout(() => t.classList.add('opacity-0'), 3000); }
+        window.addToCart = (p) => {
+            const it = cart.find(i => i.id === p.id);
+            if(it) { if(it.qty < p.stock) it.qty++; else return showToast("Stock insuficiente"); }
+            else { if(p.stock > 0) cart.push({ ...p, qty: 1 }); else return showToast("Sin stock"); }
+            renderCart();
+        };
+        window.removeFromCart = (id) => { cart = cart.filter(i => i.id !== id); renderCart(); };
+        function renderCart() {
+            const c = document.getElementById('cart-items');
+            if(cart.length === 0) c.innerHTML = '<div class="text-gray-500 text-center py-8 italic text-xs uppercase tracking-widest">Esperando herramientas...</div>';
+            else c.innerHTML = cart.map(i => `<div class="flex justify-between items-center bg-black/30 p-3 rounded-lg border border-gray-800"><div><p class="text-xs font-bold uppercase">${i.name}</p><p class="text-[10px] text-gray-500">${i.brand} | ${fmt(i.price)} x ${i.qty}</p></div><div class="flex items-center gap-3"><span class="font-bold accent-color text-sm">${fmt(i.price * i.qty)}</span><button onclick="removeFromCart('${i.id}')" class="text-red-400"><i data-lucide="x-circle" class="w-4 h-4"></i></button></div></div>`).join('');
+            const t = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            document.getElementById('cart-total').innerText = fmt(t);
+            document.getElementById('cart-count').innerText = cart.length;
+            lucide.createIcons();
+        }
+
+        const sInp = document.getElementById('search-product');
+        sInp.oninput = () => {
+            const t = sInp.value.toLowerCase(); const r = document.getElementById('search-results');
+            if(!t) { r.innerHTML = ''; return; }
+            const f = products.filter(p => p.name.toLowerCase().includes(t) || p.brand.toLowerCase().includes(t) || p.code.toLowerCase().includes(t));
+            r.innerHTML = f.slice(0,5).map(p => `<div onclick='addToCart(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="flex items-center justify-between p-3 bg-white/5 hover:bg-amber-500/10 rounded-lg cursor-pointer transition-all">
+                <div class="flex items-center gap-3"><img src="${p.image}" class="w-10 h-10 rounded object-cover" onerror="this.src='https://via.placeholder.com/40'"><div><p class="font-bold text-sm">${p.name}</p><p class="text-[10px] text-gray-500 uppercase">${p.brand} | STOCK: ${p.stock}</p></div></div><p class="font-bold accent-color text-sm">${fmt(p.price)}</p></div>`).join('');
+        };
+
+        function renderStock() {
+            document.getElementById('stock-list').innerHTML = products.map(p => `<tr class="border-b border-gray-800 hover:bg-white/5 transition-colors"><td class="p-4"><img src="${p.image || 'https://via.placeholder.com/40'}" class="w-10 h-10 object-cover rounded bg-gray-800"></td><td class="p-4 font-medium text-sm">${p.name}</td><td class="p-4 text-gray-400 text-xs uppercase">${p.brand}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${p.stock < 5 ? 'bg-red-900/40 text-red-400' : 'bg-green-900/40 text-green-400'}">${p.stock} UN</span></td><td class="p-4 font-bold text-sm accent-color">${fmt(p.price)}</td><td class="p-4 flex gap-2"><button onclick='editProduct(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="deleteProduct('${p.id}')" class="text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('');
+            lucide.createIcons();
+        }
+
+        function renderSuppliers() {
+            document.getElementById('supplier-list').innerHTML = suppliers.map(s => `<div class="bg-card p-6 rounded-xl border border-gray-800 relative group"><div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity"><button onclick='editSupplier(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="deleteSupplier('${s.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div><h4 class="text-lg font-bold mb-2 text-white">${s.name}</h4><div class="space-y-1 text-xs text-gray-400"><p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${s.whatsapp || '-'}</p><p><i data-lucide="map-pin" class="inline w-3 h-3 mr-1"></i> ${s.city}</p></div></div>`).join('');
+            lucide.createIcons();
+        }
+
+        window.filterHistory = () => {
+            const from = document.getElementById('hist-from').value ? new Date(document.getElementById('hist-from').value + "T00:00:00").getTime() : 0;
+            const to = document.getElementById('hist-to').value ? new Date(document.getElementById('hist-to').value + "T23:59:59").getTime() : Infinity;
+            const term = document.getElementById('hist-search').value.toLowerCase();
+            const type = document.getElementById('hist-type').value;
+            const filtered = historyRaw.filter(h => { const ts = h.date?.toDate().getTime() || 0; return ts >= from && ts <= to && (h.detail.toLowerCase().includes(term) || h.customerName?.toLowerCase().includes(term)) && (!type || h.saleMode === type); });
+            document.getElementById('history-list').innerHTML = filtered.sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)).map(h => `<tr class="border-b border-gray-800 text-xs"><td class="p-4 text-gray-500">${h.date?.toDate().toLocaleString() || '-'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-700">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-gray-300">${h.customerName || 'Mostrador'}</td><td class="p-4 text-gray-400 max-w-xs truncate">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join('');
+        };
+
+        function updateSupplierSelect() {
+            const s = document.getElementById('p-supplier'); const v = s.value;
+            s.innerHTML = '<option value="">Seleccionar</option>' + suppliers.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
+            s.value = v;
+        }
+
+        function updateDatalists() {
+            const ns = [...new Set(products.map(p => p.name))];
+            const bs = [...new Set(products.map(p => p.brand))];
+            document.getElementById('list-product-names').innerHTML = ns.map(n => `<option value="${n}">`).join('');
+            document.getElementById('list-brands').innerHTML = bs.map(b => `<option value="${b}">`).join('');
+        }
+
+        setSaleType('presencial');
+        switchTab('stock');
+    </script>
+</body>
+</html>
