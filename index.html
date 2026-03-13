@@ -175,7 +175,7 @@
                             </div>
                             <!-- Campos para nuevo cliente extendidos -->
                             <div id="new-customer-fields" class="space-y-2 hidden border-l-2 border-amber-500 pl-3 pt-2">
-                                <p class="text-[10px] text-amber-500 font-bold uppercase italic">Nuevo Cliente detectado:</p>
+                                <p class="text-[10px] text-amber-500 font-bold uppercase italic">Registrar Nuevo Cliente:</p>
                                 <div class="grid grid-cols-2 gap-2">
                                     <input type="text" id="c-name" placeholder="Nombre" class="w-full p-2 text-xs rounded outline-none">
                                     <input type="text" id="c-surname" placeholder="Apellido" class="w-full p-2 text-xs rounded outline-none">
@@ -267,7 +267,6 @@
     <datalist id="list-product-names"></datalist>
     <datalist id="list-brands"></datalist>
 
-    <!-- MODAL PRODUCTO -->
     <div id="modal-product" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
         <div class="bg-card w-full max-w-2xl rounded-2xl border border-gray-700 overflow-hidden max-h-[90vh] modal-scroll">
             <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-black/20">
@@ -296,7 +295,6 @@
         </div>
     </div>
 
-    <!-- MODAL PROVEEDOR -->
     <div id="modal-supplier" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
         <div class="bg-card w-full max-w-lg rounded-2xl border border-gray-700 overflow-hidden">
             <div class="p-6 border-b border-gray-800 flex justify-between items-center"><h3 class="text-xl font-bold">Proveedor</h3><button onclick="closeModal('modal-supplier')"><i data-lucide="x"></i></button></div>
@@ -318,13 +316,12 @@
         </div>
     </div>
 
-    <!-- MODAL EGRESO -->
     <div id="modal-expense" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
         <div class="bg-card w-full max-w-md rounded-2xl border border-gray-700 overflow-hidden">
             <div class="p-6 border-b border-gray-800 flex justify-between items-center"><h3>Nuevo Egreso</h3><button onclick="closeModal('modal-expense')"><i data-lucide="x"></i></button></div>
             <form id="form-expense" class="p-6 space-y-4">
                 <input type="hidden" id="e-id">
-                <div><label class="text-xs text-gray-500">Concepto (Ej: Luz, Internet, Compra Mercadería)</label><input type="text" id="e-concept" required class="w-full p-2 rounded outline-none"></div>
+                <div><label class="text-xs text-gray-500">Concepto</label><input type="text" id="e-concept" required class="w-full p-2 rounded outline-none"></div>
                 <div><label class="text-xs text-gray-500">Categoría</label>
                     <select id="e-category" class="w-full p-2 rounded outline-none">
                         <option value="Servicios">Servicios (Luz/Internet)</option>
@@ -354,271 +351,131 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, increment, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        // =========================================================================
-        // 1. CONFIGURACIÓN DE FIREBASE (OBLIGATORIO: PEGA TUS CLAVES AQUÍ)
-        // =========================================================================
-        let firebaseConfig = {
+        const firebaseConfig = {
             apiKey: "AIzaSyDsh5-ZzwjO98S1zIXUx6Sw2ICd5SwiHpM",
-  authDomain: "herramientaslibres-61449.firebaseapp.com",
-  projectId: "herramientaslibres-61449",
-  storageBucket: "herramientaslibres-61449.firebasestorage.app",
-  messagingSenderId: "184897754209",
-  appId: "1:184897754209:web:a68503fa066d8568320620"
+            authDomain: "herramientaslibres-61449.firebaseapp.com",
+            projectId: "herramientaslibres-61449",
+            storageBucket: "herramientaslibres-61449.firebasestorage.app",
+            messagingSenderId: "184897754209",
+            appId: "1:184897754209:web:a68503fa066d8568320620"
         };
 
-        // Si estamos en el Canvas, usamos la configuración inyectada automáticamente
-        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-            try { firebaseConfig = JSON.parse(__firebase_config); } catch (e) { }
-        }
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'herramientas-libres-pro';
+        const appId = 'herramientas-libres-pro';
         let db, auth;
         let products = [], suppliers = [], historyRaw = [], customers = [], expenses = [], cart = [], saleType = 'presencial';
         let selectedCustomerId = null;
 
         const fmt = (n) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
 
-        // --- INICIO DE APLICACIÓN ---
         const startApp = async () => {
-            const hasValidKeys = firebaseConfig.apiKey && firebaseConfig.apiKey !== "TU_API_KEY_AQUI";
-            
-            if (!hasValidKeys) {
-                const statusEl = document.getElementById('auth-status');
-                if (statusEl) statusEl.innerText = 'FALTAN CLAVES';
-                const loginErrEl = document.getElementById('login-error');
-                if (loginErrEl) {
-                    loginErrEl.innerText = "Falta configurar las claves de Firebase en el código.";
-                    loginErrEl.classList.remove('hidden');
-                }
-                return;
-            }
-
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
 
             onAuthStateChanged(auth, (user) => {
-                const statusEl = document.getElementById('auth-status');
-                const loginOverlay = document.getElementById('login-overlay');
-                
                 if (user) {
-                    if (loginOverlay) loginOverlay.classList.add('hidden');
-                    if (statusEl) statusEl.innerText = 'En Línea';
+                    document.getElementById('login-overlay').classList.add('hidden');
+                    document.getElementById('auth-status').innerText = 'En Línea';
                     initListeners();
                     switchTab('stock');
                 } else {
-                    if (loginOverlay) loginOverlay.classList.remove('hidden');
-                    if (statusEl) statusEl.innerText = 'Desconectado';
+                    document.getElementById('login-overlay').classList.remove('hidden');
                 }
             });
 
-            const loginForm = document.getElementById('login-form');
-            if (loginForm) {
-                loginForm.onsubmit = async (e) => {
-                    e.preventDefault();
-                    const email = document.getElementById('login-email').value;
-                    const pass = document.getElementById('login-password').value;
-                    const errorEl = document.getElementById('login-error');
-                    const btn = document.getElementById('login-btn');
-                    const loader = document.getElementById('login-loader');
-                    const text = document.getElementById('login-text');
+            document.getElementById('login-form').onsubmit = async (e) => {
+                e.preventDefault();
+                try {
+                    await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
+                } catch (err) {
+                    const errEl = document.getElementById('login-error');
+                    errEl.innerText = "Error: Credenciales inválidas.";
+                    errEl.classList.remove('hidden');
+                }
+            };
 
-                    if (errorEl) errorEl.classList.add('hidden');
-                    if (btn) btn.disabled = true;
-                    if (loader) loader.classList.remove('hidden');
-                    if (text) text.classList.add('hidden');
-
-                    try {
-                        await signInWithEmailAndPassword(auth, email, pass);
-                    } catch (err) {
-                        if (errorEl) {
-                            errorEl.innerText = "Error: Usuario o contraseña incorrectos.";
-                            errorEl.classList.remove('hidden');
-                        }
-                        if (btn) btn.disabled = false;
-                        if (loader) loader.classList.add('hidden');
-                        if (text) text.classList.remove('hidden');
-                    }
-                };
+            // VINCULAR BUSCADOR DE HERRAMIENTAS EN VENTAS
+            const sInp = document.getElementById('search-product');
+            if (sInp) {
+                sInp.addEventListener('input', () => {
+                    const t = sInp.value.toLowerCase();
+                    const r = document.getElementById('search-results');
+                    if(!t) { r.innerHTML = ''; return; }
+                    
+                    const f = products.filter(p => 
+                        p.name.toLowerCase().includes(t) || 
+                        (p.brand && p.brand.toLowerCase().includes(t)) || 
+                        (p.code && p.code.toLowerCase().includes(t))
+                    );
+                    
+                    r.innerHTML = f.slice(0,5).map(p => `
+                        <div onclick='addToCart(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="flex items-center justify-between p-3 bg-white/5 hover:bg-amber-500/10 rounded-lg cursor-pointer transition-all border border-transparent hover:border-amber-500/20">
+                            <div class="flex items-center gap-3">
+                                <img src="${p.image || ''}" class="w-10 h-10 rounded object-cover" onerror="this.src='https://via.placeholder.com/40'">
+                                <div><p class="font-bold text-sm text-white">${p.name}</p><p class="text-[10px] text-gray-500 uppercase">${p.brand || 'S/M'} | STOCK: ${p.stock}</p></div>
+                            </div>
+                            <p class="font-bold accent-color text-sm">${fmt(p.price)}</p>
+                        </div>`).join('');
+                });
             }
-            
-            const formP = document.getElementById('form-product'); if(formP) formP.onsubmit = handleProductSubmit;
-            const formS = document.getElementById('form-supplier'); if(formS) formS.onsubmit = handleSupplierSubmit;
-            const formE = document.getElementById('form-expense'); if(formE) formE.onsubmit = handleExpenseSubmit;
 
+            document.getElementById('form-product').onsubmit = handleProductSubmit;
+            document.getElementById('form-supplier').onsubmit = handleSupplierSubmit;
+            document.getElementById('form-expense').onsubmit = handleExpenseSubmit;
             lucide.createIcons();
-        };
-
-        window.signOutUser = () => {
-            if(confirm("¿Cerrar sesión?")) signOut(auth);
         };
 
         function initListeners() {
-            if (!db || !auth.currentUser) return;
-            const pPath = collection(db, 'artifacts', appId, 'public', 'data', 'products');
-            const sPath = collection(db, 'artifacts', appId, 'public', 'data', 'suppliers');
-            const hPath = collection(db, 'artifacts', appId, 'public', 'data', 'history');
-            const cPath = collection(db, 'artifacts', appId, 'public', 'data', 'customers');
-            const ePath = collection(db, 'artifacts', appId, 'public', 'data', 'expenses');
-
-            onSnapshot(pPath, sn => { products = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderStock(); window.updateDatalists(); });
-            onSnapshot(sPath, sn => { suppliers = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderSuppliers(); window.updateSupplierSelect(); });
-            onSnapshot(hPath, sn => { historyRaw = sn.docs.map(d => ({id:d.id, ...d.data()})); window.filterHistory(); window.calculateStats(); });
-            onSnapshot(cPath, sn => { customers = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderCustomers(); });
-            onSnapshot(ePath, sn => { expenses = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderExpenses(); window.calculateStats(); });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), sn => { products = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderStock(); window.updateDatalists(); });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), sn => { suppliers = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderSuppliers(); window.updateSupplierSelect(); });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'history'), sn => { historyRaw = sn.docs.map(d => ({id:d.id, ...d.data()})); window.filterHistory(); window.calculateStats(); });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'customers'), sn => { customers = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderCustomers(); });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), sn => { expenses = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderExpenses(); window.calculateStats(); });
         }
 
-        // --- MANEJO DE FORMULARIOS ---
-        async function handleProductSubmit(e) {
-            e.preventDefault();
-            if (!db || !auth.currentUser) return showToast("No autenticado");
-            const id = document.getElementById('p-id').value;
-            const data = {
-                name: document.getElementById('p-name').value,
-                brand: document.getElementById('p-brand').value,
-                code: document.getElementById('p-code').value,
-                supplierId: document.getElementById('p-supplier').value,
-                stock: parseInt(document.getElementById('p-stock').value),
-                cost: parseFloat(document.getElementById('p-cost').value),
-                price: parseFloat(document.getElementById('p-price').value),
-                image: document.getElementById('p-image-data').value,
-                updatedAt: serverTimestamp()
-            };
-            try {
-                if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), data);
-                else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { ...data, createdAt: serverTimestamp() });
-                closeModal('modal-product'); showToast("Producto guardado");
-            } catch(err) { showToast("Error al guardar"); }
-        }
-
-        async function handleSupplierSubmit(e) {
-            e.preventDefault();
-            if (!db || !auth.currentUser) return;
-            const id = document.getElementById('s-id').value;
-            const data = {
-                name: document.getElementById('s-name').value, whatsapp: document.getElementById('s-whatsapp').value,
-                phone: document.getElementById('s-phone').value, email: document.getElementById('s-email').value,
-                address: document.getElementById('s-address').value, city: document.getElementById('s-city').value,
-                country: document.getElementById('s-country').value, updatedAt: serverTimestamp()
-            };
-            try {
-                if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id), data);
-                else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), { ...data, createdAt: serverTimestamp() });
-                closeModal('modal-supplier'); showToast("Proveedor guardado");
-            } catch(err) { showToast("Error al guardar"); }
-        }
-
-        async function handleExpenseSubmit(e) {
-            e.preventDefault();
-            if (!db || !auth.currentUser) return;
-            const id = document.getElementById('e-id').value;
-            const data = { 
-                concept: document.getElementById('e-concept').value, category: document.getElementById('e-category').value, 
-                amount: parseFloat(document.getElementById('e-amount').value), date: serverTimestamp() 
-            };
-            try {
-                if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id), data);
-                else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), data);
-                closeModal('modal-expense'); showToast("Egreso registrado");
-            } catch(err) { showToast("Error al guardar"); }
-        }
-
-        // --- NAVEGACIÓN Y EXTRAS ---
-        window.switchTab = (id) => {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-            const target = document.getElementById(`sec-${id}`);
-            if (target) {
-                target.classList.remove('hidden');
-                target.style.opacity = 0;
-                setTimeout(() => target.style.opacity = 1, 50);
-            }
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('tab-active'));
-            const tabBtn = document.getElementById(`tab-${id}`); 
-            if(tabBtn) tabBtn.classList.add('tab-active');
-            lucide.createIcons();
-        };
-
-        window.openModal = (id) => { 
-            const el = document.getElementById(id);
-            if (el) { 
-                // Resetear formularios si es para una nueva carga (comenzar en blanco)
-                if(id === 'modal-product') {
-                    document.getElementById('form-product').reset();
-                    document.getElementById('p-id').value = '';
-                    const picContainer = document.getElementById('image-preview-container');
-                    if (picContainer) picContainer.innerHTML = '';
-                    document.getElementById('p-image-data').value = '';
-                } else if(id === 'modal-supplier') {
-                    document.getElementById('form-supplier').reset();
-                    document.getElementById('s-id').value = '';
-                } else if(id === 'modal-expense') {
-                    document.getElementById('form-expense').reset();
-                    document.getElementById('e-id').value = '';
-                }
-
-                el.classList.remove('hidden'); 
-                el.classList.add('flex'); 
-                lucide.createIcons(); 
-            }
-        };
-        window.closeModal = (id) => { 
-            const el = document.getElementById(id);
-            if (el) { el.classList.add('hidden'); el.classList.remove('flex'); }
-        };
-
-        window.handleImageUpload = (e) => {
-            const f = e.target.files[0];
-            if(!f) return;
-            const r = new FileReader();
-            r.onload = (ev) => {
-                const i = new Image();
-                i.onload = () => {
-                    const c = document.createElement('canvas');
-                    const w = 300; const s = w / i.width;
-                    c.width = w; c.height = i.height * s;
-                    const ctx = c.getContext('2d');
-                    ctx.drawImage(i, 0, 0, c.width, c.height);
-                    const b = c.toDataURL('image/jpeg', 0.7);
-                    document.getElementById('p-image-data').value = b;
-                    const picContainer = document.getElementById('image-preview-container');
-                    if (picContainer) picContainer.innerHTML = `<img src="${b}" class="w-full h-full object-cover">`;
-                };
-                i.src = ev.target.result;
-            };
-            r.readAsDataURL(f);
-        };
-
-        // --- VENTAS ---
+        // --- MANEJO DE CLIENTES EN VENTAS ---
         window.suggestCustomers = (term) => {
             const sug = document.getElementById('customer-suggestions');
             const fields = document.getElementById('new-customer-fields');
             if(!term) { sug.classList.add('hidden'); fields.classList.add('hidden'); return; }
             
             const matches = customers.filter(c => 
-                c.name?.toLowerCase().includes(term.toLowerCase()) || 
-                c.surname?.toLowerCase().includes(term.toLowerCase()) || 
-                c.phone?.includes(term)
+                (c.name && c.name.toLowerCase().includes(term.toLowerCase())) || 
+                (c.surname && c.surname.toLowerCase().includes(term.toLowerCase())) || 
+                (c.phone && c.phone.includes(term))
             );
 
             if(matches.length > 0) {
-                sug.innerHTML = matches.map(c => `<div onclick="selectCustomer('${c.id}', '${c.name}', '${c.surname}')" class="p-2 hover:bg-amber-500/20 cursor-pointer text-xs border-b border-gray-700 font-bold">${c.name} ${c.surname || ''} (${c.phone || 'S/T'})</div>`).join('');
+                sug.innerHTML = matches.map(c => `
+                    <div onclick="selectCustomer('${c.id}', '${c.name}', '${c.surname || ''}')" class="p-2 hover:bg-amber-500/20 cursor-pointer text-xs border-b border-gray-700 font-bold">
+                        ${c.name} ${c.surname || ''} (${c.phone || 'S/T'})
+                    </div>`).join('');
                 sug.classList.remove('hidden'); 
                 fields.classList.add('hidden');
                 selectedCustomerId = null; 
             } else {
                 sug.classList.add('hidden'); 
                 fields.classList.remove('hidden');
-                // Pre-llenar el nombre si el usuario escribió algo
-                document.getElementById('c-name').value = term;
                 selectedCustomerId = null;
+                const nameInp = document.getElementById('c-name');
+                if(nameInp && !nameInp.value) nameInp.value = term;
             }
         };
 
         window.selectCustomer = (id, name, surname) => {
             selectedCustomerId = id;
-            document.getElementById('sale-customer-search').value = `${name} ${surname || ''}`;
+            document.getElementById('sale-customer-search').value = `${name} ${surname}`;
             document.getElementById('customer-suggestions').classList.add('hidden');
             document.getElementById('new-customer-fields').classList.add('hidden');
+        };
+
+        window.addToCart = (p) => {
+            const it = cart.find(i => i.id === p.id);
+            if(it) { if(it.qty < p.stock) it.qty++; else return showToast("Stock insuficiente"); }
+            else { if(p.stock > 0) cart.push({ ...p, qty: 1 }); else return showToast("Sin stock"); }
+            document.getElementById('search-product').value = '';
+            document.getElementById('search-results').innerHTML = '';
+            window.renderCart();
         };
 
         window.processSale = async () => {
@@ -632,33 +489,19 @@
                 let customerId = selectedCustomerId;
                 let customerFullName = searchVal;
 
-                // Si no hay un ID seleccionado, intentar generar un nuevo cliente
                 if(!customerId) {
                     const firstName = document.getElementById('c-name').value.trim();
                     const lastName = document.getElementById('c-surname').value.trim();
                     const phone = document.getElementById('c-phone').value.trim();
                     const email = document.getElementById('c-email').value.trim();
 
-                    if(!firstName || !lastName) return showToast("Ingresa Nombre y Apellido del cliente");
+                    if(!firstName || !lastName) return showToast("Ingresa Nombre y Apellido para registrar el cliente");
 
-                    // Buscar si existe por nombre completo por las dudas
-                    const existing = customers.find(c => (c.name?.toLowerCase() === firstName.toLowerCase() && c.surname?.toLowerCase() === lastName.toLowerCase()));
-                    
-                    if(existing) {
-                        customerId = existing.id;
-                        customerFullName = `${existing.name} ${existing.surname}`;
-                    } else {
-                        // Crear nuevo cliente
-                        const newC = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'customers'), {
-                            name: firstName,
-                            surname: lastName,
-                            phone: phone,
-                            email: email,
-                            createdAt: serverTimestamp()
-                        });
-                        customerId = newC.id;
-                        customerFullName = `${firstName} ${lastName}`;
-                    }
+                    const newC = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'customers'), {
+                        name: firstName, surname: lastName, phone, email, createdAt: serverTimestamp()
+                    });
+                    customerId = newC.id;
+                    customerFullName = `${firstName} ${lastName}`;
                 }
 
                 const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
@@ -669,100 +512,175 @@
                 }
 
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'history'), {
-                    type: 'venta', 
-                    saleMode: saleType, 
-                    customerId, 
-                    customerName: customerFullName, 
-                    detail, 
-                    amount: total, 
-                    items: cart, 
-                    date: serverTimestamp()
+                    type: 'venta', saleMode: saleType, customerId, customerName: customerFullName, detail, amount: total, items: cart, date: serverTimestamp()
                 });
 
                 generateInvoice(cart, total, customerFullName);
-                showToast("Venta Exitosa!"); 
-                cart = []; renderCart();
-                
-                // Limpiar campos de cliente
+                showToast("¡Venta Exitosa!"); 
+                cart = []; window.renderCart();
                 document.getElementById('sale-customer-search').value = '';
-                document.getElementById('c-name').value = '';
-                document.getElementById('c-surname').value = '';
-                document.getElementById('c-phone').value = '';
-                document.getElementById('c-email').value = '';
                 document.getElementById('new-customer-fields').classList.add('hidden');
+                document.getElementById('c-name').value = ''; document.getElementById('c-surname').value = '';
+                document.getElementById('c-phone').value = ''; document.getElementById('c-email').value = '';
                 selectedCustomerId = null;
-            } catch(e) { 
-                console.error(e);
-                showToast("Error al procesar"); 
+            } catch(e) { showToast("Error al procesar la venta"); }
+        };
+
+        // --- MANEJO DE FORMULARIOS ---
+        async function handleProductSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('p-id').value;
+            const data = {
+                name: document.getElementById('p-name').value, brand: document.getElementById('p-brand').value,
+                code: document.getElementById('p-code').value, supplierId: document.getElementById('p-supplier').value,
+                stock: parseInt(document.getElementById('p-stock').value), cost: parseFloat(document.getElementById('p-cost').value),
+                price: parseFloat(document.getElementById('p-price').value), image: document.getElementById('p-image-data').value, updatedAt: serverTimestamp()
+            };
+            if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), data);
+            else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), { ...data, createdAt: serverTimestamp() });
+            closeModal('modal-product'); showToast("Producto guardado");
+        }
+
+        async function handleSupplierSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('s-id').value;
+            const data = {
+                name: document.getElementById('s-name').value, whatsapp: document.getElementById('s-whatsapp').value,
+                phone: document.getElementById('s-phone').value, email: document.getElementById('s-email').value,
+                address: document.getElementById('s-address').value, city: document.getElementById('s-city').value,
+                country: document.getElementById('s-country').value, updatedAt: serverTimestamp()
+            };
+            if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id), data);
+            else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), { ...data, createdAt: serverTimestamp() });
+            closeModal('modal-supplier'); showToast("Proveedor guardado");
+        }
+
+        async function handleExpenseSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('e-id').value;
+            const data = { concept: document.getElementById('e-concept').value, category: document.getElementById('e-category').value, amount: parseFloat(document.getElementById('e-amount').value), date: serverTimestamp() };
+            if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id), data);
+            else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), data);
+            closeModal('modal-expense'); showToast("Egreso registrado");
+        }
+
+        // --- NAVEGACIÓN Y EXTRAS ---
+        window.switchTab = (id) => {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            const target = document.getElementById(`sec-${id}`);
+            if (target) { target.classList.remove('hidden'); }
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('tab-active'));
+            const tabBtn = document.getElementById(`tab-${id}`); 
+            if(tabBtn) tabBtn.classList.add('tab-active');
+            lucide.createIcons();
+        };
+
+        window.openModal = (id) => { 
+            const el = document.getElementById(id);
+            if (el) { 
+                const form = el.querySelector('form');
+                if(form) form.reset();
+                const hid = el.querySelector('input[type="hidden"]');
+                if(hid) hid.value = '';
+                const picC = document.getElementById('image-preview-container');
+                if (picC && id === 'modal-product') picC.innerHTML = '';
+                el.classList.remove('hidden'); el.classList.add('flex'); lucide.createIcons(); 
             }
         };
 
-        function generateInvoice(items, total, customer) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.setFillColor(30, 30, 30); doc.rect(0, 0, 210, 40, 'F');
-            doc.setTextColor(245, 158, 11); doc.setFontSize(22); doc.text("HERRAMIENTAS LIBRES", 15, 25);
-            doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.text("Comprobante de Venta", 15, 32);
-            doc.text(`Cliente: ${customer}`, 150, 25);
-            doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 150, 32);
+        window.closeModal = (id) => { const el = document.getElementById(id); if (el) { el.classList.add('hidden'); el.classList.remove('flex'); } };
 
-            doc.autoTable({
-                startY: 50,
-                head: [['Producto', 'Marca', 'Cant.', 'Unitario', 'Subtotal']],
-                body: items.map(i => [i.name, i.brand, i.qty, fmt(i.price), fmt(i.price * i.qty)]),
-                theme: 'grid',
-                headStyles: { fillColor: [245, 158, 11], textColor: [0, 0, 0] }
-            });
-            doc.setTextColor(0, 0, 0); doc.setFontSize(14);
-            doc.text(`TOTAL: ${fmt(total)}`, 140, doc.lastAutoTable.finalY + 15);
-            doc.save(`Venta_${customer.replace(/\s+/g, '_')}.pdf`);
-        }
+        window.handleImageUpload = (e) => {
+            const f = e.target.files[0]; if(!f) return;
+            const r = new FileReader();
+            r.onload = (ev) => {
+                const i = new Image();
+                i.onload = () => {
+                    const c = document.createElement('canvas'); const w = 300; const s = w / i.width;
+                    c.width = w; c.height = i.height * s; const ctx = c.getContext('2d');
+                    ctx.drawImage(i, 0, 0, c.width, c.height); const b = c.toDataURL('image/jpeg', 0.7);
+                    document.getElementById('p-image-data').value = b;
+                    const pc = document.getElementById('image-preview-container'); if (pc) pc.innerHTML = `<img src="${b}" class="w-full h-full object-cover">`;
+                };
+                i.src = ev.target.result;
+            };
+            r.readAsDataURL(f);
+        };
 
-        // --- RENDERIZADO ---
         window.renderStock = () => {
-            const sl = document.getElementById('stock-list');
-            if(!sl) return;
-            sl.innerHTML = products.map(p => `<tr class="border-b border-gray-800 hover:bg-white/5 transition-colors"><td class="p-4"><img src="${p.image || 'https://via.placeholder.com/40'}" class="w-10 h-10 object-cover rounded bg-gray-800"></td><td class="p-4 font-medium text-sm">${p.name}</td><td class="p-4 text-gray-400 text-xs uppercase">${p.brand}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${p.stock < 5 ? 'bg-red-900/40 text-red-400' : 'bg-green-900/40 text-green-400'}">${p.stock} UN</span></td><td class="p-4 font-bold text-sm accent-color">${fmt(p.price)}</td><td class="p-4 flex gap-2"><button onclick='editProduct(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="deleteProduct('${p.id}')" class="text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('');
+            const sl = document.getElementById('stock-list'); if(!sl) return;
+            sl.innerHTML = products.map(p => `
+                <tr class="border-b border-gray-800 hover:bg-white/5 transition-colors">
+                    <td class="p-4"><img src="${p.image || ''}" class="w-10 h-10 object-cover rounded bg-gray-800" onerror="this.src='https://via.placeholder.com/40'"></td>
+                    <td class="p-4 font-medium text-sm text-white">${p.name}</td>
+                    <td class="p-4 text-gray-400 text-xs uppercase">${p.brand || 'S/M'}</td>
+                    <td class="p-4 font-bold text-xs ${p.stock < 5 ? 'text-red-500' : 'text-green-500'}">${p.stock} UN</td>
+                    <td class="p-4 font-bold text-sm accent-color">${fmt(p.price)}</td>
+                    <td class="p-4 flex gap-2">
+                        <button onclick='editProduct(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-amber-500 hover:scale-110 transition-transform"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                        <button onclick="deleteProduct('${p.id}')" class="text-red-400 hover:scale-110 transition-transform"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>`).join('');
             lucide.createIcons();
+        };
+
+        window.editProduct = (p) => {
+            document.getElementById('p-id').value = p.id; document.getElementById('p-name').value = p.name;
+            document.getElementById('p-brand').value = p.brand; document.getElementById('p-code').value = p.code;
+            document.getElementById('p-supplier').value = p.supplierId || ''; document.getElementById('p-stock').value = p.stock;
+            document.getElementById('p-cost').value = p.cost; document.getElementById('p-price').value = p.price;
+            document.getElementById('p-image-data').value = p.image || ''; 
+            const picContainer = document.getElementById('image-preview-container');
+            if (picContainer) picContainer.innerHTML = p.image ? `<img src="${p.image}" class="w-full h-full object-cover">` : '';
+            openModal('modal-product');
         };
 
         window.renderSuppliers = () => {
-            const spl = document.getElementById('supplier-list');
-            if(!spl) return;
-            spl.innerHTML = suppliers.map(s => `<div class="bg-card p-6 rounded-xl border border-gray-800 relative group"><div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity"><button onclick='editSupplier(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="deleteSupplier('${s.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div><h4 class="text-lg font-bold mb-2 text-white">${s.name}</h4><div class="space-y-1 text-xs text-gray-400"><p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${s.whatsapp || '-'}</p><p><i data-lucide="map-pin" class="inline w-3 h-3 mr-1"></i> ${s.city}</p></div></div>`).join('');
+            const spl = document.getElementById('supplier-list'); if(!spl) return;
+            spl.innerHTML = suppliers.map(s => `
+                <div class="bg-card p-6 rounded-xl border border-gray-800 relative group">
+                    <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick='editSupplier(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                        <button onclick="deleteSupplier('${s.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                    <h4 class="text-lg font-bold mb-2 text-white">${s.name}</h4>
+                    <div class="space-y-1 text-xs text-gray-400">
+                        <p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${s.whatsapp || '-'}</p>
+                        <p><i data-lucide="map-pin" class="inline w-3 h-3 mr-1"></i> ${s.city}</p>
+                    </div>
+                </div>`).join('');
             lucide.createIcons();
         };
 
+        window.editSupplier = (s) => {
+            document.getElementById('s-id').value = s.id; document.getElementById('s-name').value = s.name;
+            document.getElementById('s-whatsapp').value = s.whatsapp; document.getElementById('s-phone').value = s.phone;
+            document.getElementById('s-email').value = s.email; document.getElementById('s-address').value = s.address;
+            document.getElementById('s-city').value = s.city; document.getElementById('s-country').value = s.country;
+            const el = document.getElementById('modal-supplier'); el.classList.remove('hidden'); el.classList.add('flex');
+        };
+
         window.renderCustomers = () => {
-            const el = document.getElementById('filter-clients');
-            if (!el) return;
+            const el = document.getElementById('filter-clients'); if (!el) return;
             const term = el.value.toLowerCase();
-            const filtered = customers.filter(c => 
-                c.name?.toLowerCase().includes(term) || 
-                c.surname?.toLowerCase().includes(term) || 
-                c.phone?.includes(term)
-            );
+            const filtered = customers.filter(c => (c.name && c.name.toLowerCase().includes(term)) || (c.surname && c.surname.toLowerCase().includes(term)));
             const cl = document.getElementById('customer-list');
-            if (cl) {
-                cl.innerHTML = filtered.map(c => `
-                    <div class="bg-card p-6 rounded-xl border border-gray-800 relative group">
-                        <button onclick="viewClientHistory('${c.id}', '${c.name} ${c.surname || ''}')" class="absolute top-4 right-4 text-amber-500 hover:scale-110 transition-all"><i data-lucide="history" class="w-5 h-5"></i></button>
-                        <h4 class="text-lg font-bold mb-1">${c.name} ${c.surname || ''}</h4>
-                        <div class="text-xs text-gray-400 space-y-1">
-                            <p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${c.phone || 'S/T'}</p>
-                            <p><i data-lucide="mail" class="inline w-3 h-3 mr-1"></i> ${c.email || 'S/E'}</p>
-                        </div>
+            if (cl) cl.innerHTML = filtered.map(c => `
+                <div class="bg-card p-6 rounded-xl border border-gray-800 relative group">
+                    <button onclick="viewClientHistory('${c.id}', '${c.name} ${c.surname || ''}')" class="absolute top-4 right-4 text-amber-500"><i data-lucide="history" class="w-5 h-5"></i></button>
+                    <h4 class="text-lg font-bold mb-1">${c.name} ${c.surname || ''}</h4>
+                    <div class="text-xs text-gray-400 space-y-1">
+                        <p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${c.phone || 'S/T'}</p>
+                        <p><i data-lucide="mail" class="inline w-3 h-3 mr-1"></i> ${c.email || 'S/E'}</p>
                     </div>
-                `).join('');
-            }
+                </div>`).join('');
             lucide.createIcons();
         };
 
         window.renderExpenses = () => {
-            const el = document.getElementById('expense-list');
-            if(!el) return;
+            const el = document.getElementById('expense-list'); if(!el) return;
             el.innerHTML = expenses.map(e => `
-                <tr class="border-b border-gray-800 hover:bg-white/5">
+                <tr class="border-b border-gray-800 hover:bg-white/5 transition-colors">
                     <td class="p-4 text-xs text-gray-500">${e.date?.toDate ? e.date.toDate().toLocaleDateString() : '-'}</td>
                     <td class="p-4 font-medium">${e.concept}</td>
                     <td class="p-4"><span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-gray-400 uppercase">${e.category}</span></td>
@@ -771,109 +689,85 @@
                         <button onclick='editExpense(${JSON.stringify(e).replace(/'/g, "&apos;")})' class="text-gray-500 hover:text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
                         <button onclick="deleteExpense('${e.id}')" class="text-gray-500 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </td>
-                </tr>
-            `).join('');
-            lucide.createIcons();
-        };
-
-        // --- OTROS HELPERS ---
-        function showToast(m) { const t = document.getElementById('toast'); if(t){ t.innerText = m; t.classList.remove('opacity-0'); setTimeout(() => t.classList.add('opacity-0'), 3000); } }
-        window.setSaleType = (t) => { 
-            saleType = t; 
-            const bP = document.getElementById('btn-presencial'); if(bP) bP.classList.toggle('border-amber-500', t === 'presencial'); 
-            const bO = document.getElementById('btn-online'); if(bO) bO.classList.toggle('border-amber-500', t === 'online'); 
-        };
-        
-        window.renderCart = () => {
-            const c = document.getElementById('cart-items');
-            if(!c) return;
-            if(cart.length === 0) c.innerHTML = '<div class="text-gray-500 text-center py-8 italic text-xs uppercase tracking-widest">Carrito vacío</div>';
-            else c.innerHTML = cart.map(i => `<div class="flex justify-between items-center bg-black/30 p-3 rounded-lg border border-gray-800"><div><p class="text-xs font-bold uppercase">${i.name}</p><p class="text-[10px] text-gray-500">${i.brand} | ${fmt(i.price)} x ${i.qty}</p></div><div class="flex items-center gap-3"><span class="font-bold accent-color text-sm">${fmt(i.price * i.qty)}</span><button onclick="removeFromCart('${i.id}')" class="text-red-400"><i data-lucide="x-circle" class="w-4 h-4"></i></button></div></div>`).join('');
-            const t = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            const totalEl = document.getElementById('cart-total'); if(totalEl) totalEl.innerText = fmt(t);
-            const countEl = document.getElementById('cart-count'); if(countEl) countEl.innerText = cart.length;
-            lucide.createIcons();
-        };
-
-        window.addToCart = (p) => {
-            const it = cart.find(i => i.id === p.id);
-            if(it) { if(it.qty < p.stock) it.qty++; else return showToast("Stock insuficiente"); }
-            else { if(p.stock > 0) cart.push({ ...p, qty: 1 }); else return showToast("Sin stock"); }
-            window.renderCart();
-        };
-
-        window.removeFromCart = (id) => { cart = cart.filter(i => i.id !== id); window.renderCart(); };
-
-        window.editProduct = (p) => {
-            document.getElementById('p-id').value = p.id; 
-            document.getElementById('p-name').value = p.name;
-            document.getElementById('p-brand').value = p.brand; 
-            document.getElementById('p-code').value = p.code;
-            document.getElementById('p-supplier').value = p.supplierId || ''; 
-            document.getElementById('p-stock').value = p.stock;
-            document.getElementById('p-cost').value = p.cost; 
-            document.getElementById('p-price').value = p.price;
-            document.getElementById('p-image-data').value = p.image || ''; 
-            const picContainer = document.getElementById('image-preview-container');
-            if (picContainer) picContainer.innerHTML = p.image ? `<img src="${p.image}" class="w-full h-full object-cover">` : '';
-            const el = document.getElementById('modal-product');
-            el.classList.remove('hidden'); el.classList.add('flex');
-            lucide.createIcons();
-        };
-
-        window.editSupplier = (s) => {
-            document.getElementById('s-id').value = s.id;
-            document.getElementById('s-name').value = s.name;
-            document.getElementById('s-whatsapp').value = s.whatsapp;
-            document.getElementById('s-phone').value = s.phone;
-            document.getElementById('s-email').value = s.email;
-            document.getElementById('s-address').value = s.address;
-            document.getElementById('s-city').value = s.city;
-            document.getElementById('s-country').value = s.country;
-            const el = document.getElementById('modal-supplier');
-            el.classList.remove('hidden'); el.classList.add('flex');
+                </tr>`).join('');
             lucide.createIcons();
         };
 
         window.editExpense = (e) => {
-            document.getElementById('e-id').value = e.id; 
-            document.getElementById('e-concept').value = e.concept;
-            document.getElementById('e-category').value = e.category; 
-            document.getElementById('e-amount').value = e.amount;
-            const el = document.getElementById('modal-expense');
-            el.classList.remove('hidden'); el.classList.add('flex');
+            document.getElementById('e-id').value = e.id; document.getElementById('e-concept').value = e.concept;
+            document.getElementById('e-category').value = e.category; document.getElementById('e-amount').value = e.amount;
+            const el = document.getElementById('modal-expense'); el.classList.remove('hidden'); el.classList.add('flex');
+        };
+
+        function generateInvoice(items, total, customer) {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            doc.setFillColor(30, 30, 30); doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(245, 158, 11); doc.setFontSize(22); doc.text("HERRAMIENTAS LIBRES", 15, 25);
+            doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.text("Comprobante de Venta", 15, 32);
+            doc.text(`Cliente: ${customer}`, 150, 25); doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 150, 32);
+            doc.autoTable({
+                startY: 50,
+                head: [['Producto', 'Marca', 'Cant.', 'Unitario', 'Subtotal']],
+                body: items.map(i => [i.name, i.brand || 'S/M', i.qty, fmt(i.price), fmt(i.price * i.qty)]),
+                theme: 'grid', headStyles: { fillColor: [245, 158, 11], textColor: [0, 0, 0] }
+            });
+            doc.setTextColor(0, 0, 0); doc.setFontSize(14); doc.text(`TOTAL: ${fmt(total)}`, 140, doc.lastAutoTable.finalY + 15);
+            doc.save(`Venta_${customer.replace(/\s+/g, '_')}.pdf`);
+        }
+
+        window.renderCart = () => {
+            const c = document.getElementById('cart-items'); if(!c) return;
+            if(cart.length === 0) c.innerHTML = '<div class="text-gray-500 text-center py-8 italic text-xs uppercase tracking-widest">Carrito vacío</div>';
+            else c.innerHTML = cart.map(i => `
+                <div class="flex justify-between items-center bg-black/30 p-3 rounded-lg border border-gray-800">
+                    <div><p class="text-xs font-bold uppercase text-white">${i.name}</p><p class="text-[10px] text-gray-500">${i.brand || 'S/M'} | ${fmt(i.price)} x ${i.qty}</p></div>
+                    <div class="flex items-center gap-3"><span class="font-bold accent-color text-sm">${fmt(i.price * i.qty)}</span><button onclick="removeFromCart('${i.id}')" class="text-red-400"><i data-lucide="x-circle" class="w-4 h-4"></i></button></div>
+                </div>`).join('');
+            const t = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            document.getElementById('cart-total').innerText = fmt(t);
+            document.getElementById('cart-count').innerText = cart.length;
             lucide.createIcons();
         };
 
-        window.deleteProduct = async (id) => { if(confirm("¿Eliminar herramienta?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id)); };
-        window.deleteSupplier = async (id) => { if(confirm("¿Eliminar proveedor?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id)); };
-        window.deleteExpense = async (id) => { if(confirm("¿Eliminar gasto?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id)); };
-
+        function showToast(m) { const t = document.getElementById('toast'); if(t){ t.innerText = m; t.classList.remove('opacity-0'); setTimeout(() => t.classList.add('opacity-0'), 3000); } }
+        window.calculateStats = () => {
+            const totalSales = historyRaw.reduce((s, h) => s + (h.amount || 0), 0);
+            const totalExpenses = expenses.reduce((s, e) => s + (e.amount || 0), 0);
+            document.getElementById('stat-sales').innerText = fmt(totalSales);
+            document.getElementById('stat-expenses').innerText = fmt(totalExpenses);
+            document.getElementById('stat-balance').innerText = fmt(totalSales - totalExpenses);
+        };
         window.updateSupplierSelect = () => { const s = document.getElementById('p-supplier'); if (s) s.innerHTML = '<option value="">Seleccionar</option>' + suppliers.map(x => `<option value="${x.id}">${x.name}</option>`).join(''); };
         window.updateDatalists = () => {
             const nEl = document.getElementById('list-product-names'); const bEl = document.getElementById('list-brands');
             if (nEl) nEl.innerHTML = [...new Set(products.map(p => p.name))].map(n => `<option value="${n}">`).join('');
             if (bEl) bEl.innerHTML = [...new Set(products.map(p => p.brand))].map(b => `<option value="${b}">`).join('');
         };
-
+        window.deleteProduct = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id)); };
+        window.deleteSupplier = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id)); };
+        window.deleteExpense = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id)); };
+        window.signOutUser = () => { if(confirm("¿Cerrar sesión?")) signOut(auth); };
+        window.removeFromCart = (id) => { cart = cart.filter(i => i.id !== id); window.renderCart(); };
+        window.viewClientHistory = (id, name) => {
+            const clientSales = historyRaw.filter(h => h.customerId === id);
+            document.getElementById('client-history-name').innerText = `Compras de ${name}`;
+            document.getElementById('client-history-content').innerHTML = clientSales.length ? clientSales.map(h => `
+                <div class="mb-4 p-4 bg-black/30 rounded border border-gray-800">
+                    <div class="flex justify-between text-xs mb-1"><span class="text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleDateString() : 'Reciente'}</span><span class="font-bold accent-color uppercase">${h.saleMode}</span></div>
+                    <p class="text-sm">${h.detail}</p><p class="text-right font-bold mt-2">${fmt(h.amount)}</p>
+                </div>`).join('') : '<p class="text-center italic text-gray-500">Sin compras registradas</p>';
+            openModal('modal-client-history');
+        };
         window.filterHistory = () => {
-            const fromEl = document.getElementById('hist-from');
-            const toEl = document.getElementById('hist-to');
-            const searchEl = document.getElementById('hist-search');
-            const typeEl = document.getElementById('hist-type');
-            
-            const from = fromEl?.value ? new Date(fromEl.value + "T00:00:00").getTime() : 0;
-            const to = toEl?.value ? new Date(toEl.value + "T23:59:59").getTime() : Infinity;
-            const term = searchEl?.value.toLowerCase() || "";
-            const type = typeEl?.value;
-            
+            const from = document.getElementById('hist-from').value ? new Date(document.getElementById('hist-from').value + "T00:00:00").getTime() : 0;
+            const to = document.getElementById('hist-to').value ? new Date(document.getElementById('hist-to').value + "T23:59:59").getTime() : Infinity;
+            const term = document.getElementById('hist-search').value.toLowerCase();
+            const type = document.getElementById('hist-type').value;
             const filtered = historyRaw.filter(h => { 
                 const ts = h.date?.toDate ? h.date.toDate().getTime() : 0; 
-                return ts >= from && ts <= to && (h.detail.toLowerCase().includes(term) || h.customerName?.toLowerCase().includes(term)) && (!type || h.saleMode === type); 
+                return ts >= from && ts <= to && (h.detail.toLowerCase().includes(term) || (h.customerName && h.customerName.toLowerCase().includes(term))) && (!type || h.saleMode === type); 
             });
-            
-            const hl = document.getElementById('history-list');
-            if(hl) hl.innerHTML = filtered.sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)).map(h => `<tr class="border-b border-gray-800 text-xs"><td class="p-4 text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-700">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-gray-300">${h.customerName || 'Mostrador'}</td><td class="p-4 text-gray-400 max-w-xs truncate">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join('');
+            document.getElementById('history-list').innerHTML = filtered.sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)).map(h => `<tr class="border-b border-gray-800 text-xs"><td class="p-4 text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-700">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-gray-300">${h.customerName || 'Mostrador'}</td><td class="p-4 text-gray-400 max-w-xs truncate">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join('');
         };
 
         window.addEventListener('load', startApp);
