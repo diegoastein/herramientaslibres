@@ -175,8 +175,8 @@
                         <div class="space-y-3">
                             <label class="block text-[10px] text-gray-500 uppercase font-bold">Tipo de Venta</label>
                             <div class="grid grid-cols-2 gap-2">
-                                <button onclick="setSaleType('presencial')" id="btn-presencial" class="py-2 rounded border border-gray-700 text-xs transition-all">Presencial</button>
-                                <button onclick="setSaleType('online')" id="btn-online" class="py-2 rounded border border-gray-700 text-xs transition-all">Online</button>
+                                <button onclick="window.setSaleType('presencial')" id="btn-presencial" class="py-2 rounded border border-gray-700 text-xs transition-all">Presencial</button>
+                                <button onclick="window.setSaleType('online')" id="btn-online" class="py-2 rounded border border-gray-700 text-xs transition-all">Online</button>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 gap-3">
@@ -450,7 +450,7 @@
                     );
                     
                     r.innerHTML = f.slice(0,5).map(p => `
-                        <div onclick='window.addToCartById("${p.id}")' class="flex items-center justify-between p-3 bg-white/5 hover:bg-amber-500/10 rounded-lg cursor-pointer transition-all border border-transparent hover:border-amber-500/20">
+                        <div onclick="window.addToCartById('${p.id}')" class="flex items-center justify-between p-3 bg-white/5 hover:bg-amber-500/10 rounded-lg cursor-pointer transition-all border border-transparent hover:border-amber-500/20">
                             <div class="flex items-center gap-3">
                                 <img src="${p.image || ''}" class="w-10 h-10 rounded object-cover" onerror="this.src='https://via.placeholder.com/40'">
                                 <div><p class="font-bold text-sm text-white">${p.name}</p><p class="text-[10px] text-gray-500 uppercase">${p.brand || 'S/M'} | STOCK: ${p.stock}</p></div>
@@ -485,7 +485,7 @@
             const search = searchEl ? searchEl.value.toLowerCase() : "";
             
             let filtered = search ? 
-                products.filter(p => p.name.toLowerCase().includes(search) || (p.brand && p.brand.toLowerCase().includes(search)) || (p.code && p.code.toLowerCase().includes(search))) :
+                products.filter(p => (p.name && p.name.toLowerCase().includes(search)) || (p.brand && p.brand.toLowerCase().includes(search)) || (p.code && p.code.toLowerCase().includes(search))) :
                 [...products].sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 20);
 
             sl.innerHTML = filtered.map(p => `
@@ -683,9 +683,17 @@
             const p = products.find(x => x.id === id);
             if(!p) return;
             const it = cart.find(i => i.id === p.id);
-            if(it) { if(it.qty < p.stock) it.qty++; else return showToast("Stock insuficiente"); }
-            else { if(p.stock > 0) cart.push({ ...p, qty: 1 }); else return showToast("Sin stock"); }
-            document.getElementById('search-product').value = ''; document.getElementById('search-results').innerHTML = ''; window.renderCart();
+            if(it) { 
+                if(it.qty < p.stock) it.qty++; 
+                else showToast("Stock insuficiente"); 
+            }
+            else { 
+                if(p.stock > 0) cart.push({ ...p, qty: 1 }); 
+                else showToast("Sin stock"); 
+            }
+            document.getElementById('search-product').value = ''; 
+            document.getElementById('search-results').innerHTML = ''; 
+            window.renderCart();
         };
 
         window.processSale = async () => {
@@ -802,6 +810,20 @@
             const nEl = document.getElementById('list-product-names'); const bEl = document.getElementById('list-brands');
             if (nEl) nEl.innerHTML = [...new Set(products.map(p => p.name))].map(n => `<option value="${n}">`).join('');
             if (bEl) bEl.innerHTML = [...new Set(products.map(p => p.brand))].map(b => `<option value="${b}">`).join('');
+        };
+
+        window.renderCart = () => {
+            const c = document.getElementById('cart-items'); if(!c) return;
+            if(cart.length === 0) c.innerHTML = '<div class="text-gray-500 text-center py-8 italic text-xs uppercase tracking-widest">Carrito vacío</div>';
+            else c.innerHTML = cart.map(i => `
+                <div class="flex justify-between items-center bg-black/30 p-3 rounded-lg border border-gray-800">
+                    <div><p class="text-xs font-bold uppercase text-white">${i.name}</p><p class="text-[10px] text-gray-500">${i.brand || 'S/M'} | ${fmt(i.price)} x ${i.qty}</p></div>
+                    <div class="flex items-center gap-3"><span class="font-bold accent-color text-sm">${fmt(i.price * i.qty)}</span><button onclick="window.removeFromCart('${i.id}')" class="text-red-400"><i data-lucide="x-circle" class="w-4 h-4"></i></button></div>
+                </div>`).join('');
+            const t = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            const totalEl = document.getElementById('cart-total'); if(totalEl) totalEl.innerText = fmt(t);
+            const countEl = document.getElementById('cart-count'); if(countEl) countEl.innerText = cart.length;
+            lucide.createIcons();
         };
 
         window.filterHistory = () => {
