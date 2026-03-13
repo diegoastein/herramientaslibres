@@ -41,6 +41,9 @@
         }
 
         .modal-scroll { max-height: 80vh; overflow-y: auto; }
+        
+        /* Asegurar que el contenido se vea mientras carga */
+        .tab-content { transition: opacity 0.2s ease-in-out; }
     </style>
 </head>
 <body class="min-h-screen pb-20 md:pb-0">
@@ -104,7 +107,7 @@
         </section>
 
         <!-- SECCIÓN: VENTAS -->
-        <section id="sec-ventas" class="tab-content">
+        <section id="sec-ventas" class="tab-content hidden">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2">
                     <div class="bg-card p-6 rounded-xl border border-gray-800 mb-6">
@@ -307,20 +310,38 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, increment, serverTimestamp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        // Gestión de Configuración para GitHub Pages (Protección contra errores)
+        let firebaseConfig = {};
+        try {
+            firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        } catch (e) {
+            console.warn("Configuración de Firebase no detectada.");
+        }
+        
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'herramientas-libres-pro';
+
+        // Inicialización solo si hay config
+        let db = null;
+        let auth = null;
+        if (firebaseConfig.apiKey) {
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        }
 
         let products = [], suppliers = [], historyRaw = [], customers = [], expenses = [], cart = [], saleType = 'presencial';
         let selectedCustomerId = null;
 
-        onAuthStateChanged(auth, (user) => { if (user) { document.getElementById('auth-status').innerText = 'En línea'; initListeners(); } });
-        const initAuth = async () => { if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token); else await signInAnonymously(auth); };
-        initAuth();
+        if (auth) {
+            onAuthStateChanged(auth, (user) => { if (user) { document.getElementById('auth-status').innerText = 'En línea'; initListeners(); } });
+            const initAuth = async () => { if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token); else await signInAnonymously(auth); };
+            initAuth();
+        } else {
+            document.getElementById('auth-status').innerText = 'Modo local (Sin Firebase)';
+        }
 
         function initListeners() {
+            if (!db) return;
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'products'), sn => { products = sn.docs.map(d => ({id:d.id, ...d.data()})); renderStock(); updateDatalists(); });
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), sn => { suppliers = sn.docs.map(d => ({id:d.id, ...d.data()})); renderSuppliers(); updateSupplierSelect(); });
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'history'), sn => { historyRaw = sn.docs.map(d => ({id:d.id, ...d.data()})); filterHistory(); calculateStats(); });
@@ -333,7 +354,11 @@
         window.switchTab = (id) => {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
             const target = document.getElementById(`sec-${id}`);
-            if (target) target.classList.remove('hidden');
+            if (target) {
+                target.classList.remove('hidden');
+                target.style.opacity = 0;
+                setTimeout(() => target.style.opacity = 1, 50);
+            }
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('tab-active'));
             const tabBtn = document.getElementById(`tab-${id}`); 
             if(tabBtn) tabBtn.classList.add('tab-active');
@@ -381,6 +406,7 @@
         // PRODUCT FORMS
         document.getElementById('form-product').onsubmit = async (e) => {
             e.preventDefault();
+            if (!db) return showToast("No hay conexión a base de datos");
             const id = document.getElementById('p-id').value;
             const data = {
                 name: document.getElementById('p-name').value,
@@ -417,6 +443,7 @@
         // SUPPLIER FORMS
         document.getElementById('form-supplier').onsubmit = async (e) => {
             e.preventDefault();
+            if (!db) return;
             const id = document.getElementById('s-id').value;
             const data = {
                 name: document.getElementById('s-name').value,
@@ -476,6 +503,7 @@
         };
 
         window.processSale = async () => {
+            if(!db) return showToast("Sin conexión a base de datos");
             if(cart.length === 0) return showToast("Carrito vacío");
             const searchVal = document.getElementById('sale-customer-search').value.trim();
             if(!searchVal) return showToast("Identifique al cliente");
@@ -528,7 +556,7 @@
             document.getElementById('client-history-name').innerText = `Compras de ${name}`;
             document.getElementById('client-history-content').innerHTML = clientSales.length ? clientSales.map(h => `
                 <div class="mb-4 p-4 bg-black/30 rounded border border-gray-800">
-                    <div class="flex justify-between text-xs mb-1"><span class="text-gray-500">${h.date?.toDate().toLocaleDateString()}</span><span class="font-bold accent-color uppercase">${h.saleMode}</span></div>
+                    <div class="flex justify-between text-xs mb-1"><span class="text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleDateString() : 'Reciente'}</span><span class="font-bold accent-color uppercase">${h.saleMode}</span></div>
                     <p class="text-sm">${h.detail}</p><p class="text-right font-bold mt-2">${fmt(h.amount)}</p>
                 </div>
             `).join('') : '<p class="text-center italic text-gray-500">Sin compras registradas</p>';
@@ -538,6 +566,7 @@
         // CONTABILIDAD
         document.getElementById('form-expense').onsubmit = async (e) => {
             e.preventDefault();
+            if (!db) return;
             const id = document.getElementById('e-id').value;
             const data = { concept: document.getElementById('e-concept').value, category: document.getElementById('e-category').value, amount: parseFloat(document.getElementById('e-amount').value), date: serverTimestamp() };
             if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id), data);
@@ -548,7 +577,7 @@
         function renderExpenses() {
             document.getElementById('expense-list').innerHTML = expenses.map(e => `
                 <tr class="border-b border-gray-800 hover:bg-white/5">
-                    <td class="p-4 text-xs text-gray-500">${e.date?.toDate().toLocaleDateString() || '-'}</td>
+                    <td class="p-4 text-xs text-gray-500">${e.date?.toDate ? e.date.toDate().toLocaleDateString() : '-'}</td>
                     <td class="p-4 font-medium">${e.concept}</td>
                     <td class="p-4"><span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-gray-400 uppercase">${e.category}</span></td>
                     <td class="p-4 font-bold text-red-400">${fmt(e.amount)}</td>
@@ -596,13 +625,15 @@
         }
 
         const sInp = document.getElementById('search-product');
-        sInp.oninput = () => {
-            const t = sInp.value.toLowerCase(); const r = document.getElementById('search-results');
-            if(!t) { r.innerHTML = ''; return; }
-            const f = products.filter(p => p.name.toLowerCase().includes(t) || p.brand.toLowerCase().includes(t) || p.code.toLowerCase().includes(t));
-            r.innerHTML = f.slice(0,5).map(p => `<div onclick='addToCart(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="flex items-center justify-between p-3 bg-white/5 hover:bg-amber-500/10 rounded-lg cursor-pointer transition-all">
-                <div class="flex items-center gap-3"><img src="${p.image}" class="w-10 h-10 rounded object-cover" onerror="this.src='https://via.placeholder.com/40'"><div><p class="font-bold text-sm">${p.name}</p><p class="text-[10px] text-gray-500 uppercase">${p.brand} | STOCK: ${p.stock}</p></div></div><p class="font-bold accent-color text-sm">${fmt(p.price)}</p></div>`).join('');
-        };
+        if (sInp) {
+            sInp.oninput = () => {
+                const t = sInp.value.toLowerCase(); const r = document.getElementById('search-results');
+                if(!t) { r.innerHTML = ''; return; }
+                const f = products.filter(p => p.name.toLowerCase().includes(t) || p.brand.toLowerCase().includes(t) || p.code.toLowerCase().includes(t));
+                r.innerHTML = f.slice(0,5).map(p => `<div onclick='addToCart(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="flex items-center justify-between p-3 bg-white/5 hover:bg-amber-500/10 rounded-lg cursor-pointer transition-all">
+                    <div class="flex items-center gap-3"><img src="${p.image}" class="w-10 h-10 rounded object-cover" onerror="this.src='https://via.placeholder.com/40'"><div><p class="font-bold text-sm">${p.name}</p><p class="text-[10px] text-gray-500 uppercase">${p.brand} | STOCK: ${p.stock}</p></div></div><p class="font-bold accent-color text-sm">${fmt(p.price)}</p></div>`).join('');
+            };
+        }
 
         function renderStock() {
             document.getElementById('stock-list').innerHTML = products.map(p => `<tr class="border-b border-gray-800 hover:bg-white/5 transition-colors"><td class="p-4"><img src="${p.image || 'https://via.placeholder.com/40'}" class="w-10 h-10 object-cover rounded bg-gray-800"></td><td class="p-4 font-medium text-sm">${p.name}</td><td class="p-4 text-gray-400 text-xs uppercase">${p.brand}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${p.stock < 5 ? 'bg-red-900/40 text-red-400' : 'bg-green-900/40 text-green-400'}">${p.stock} UN</span></td><td class="p-4 font-bold text-sm accent-color">${fmt(p.price)}</td><td class="p-4 flex gap-2"><button onclick='editProduct(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="deleteProduct('${p.id}')" class="text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('');
@@ -615,29 +646,48 @@
         }
 
         window.filterHistory = () => {
-            const from = document.getElementById('hist-from').value ? new Date(document.getElementById('hist-from').value + "T00:00:00").getTime() : 0;
-            const to = document.getElementById('hist-to').value ? new Date(document.getElementById('hist-to').value + "T23:59:59").getTime() : Infinity;
-            const term = document.getElementById('hist-search').value.toLowerCase();
-            const type = document.getElementById('hist-type').value;
-            const filtered = historyRaw.filter(h => { const ts = h.date?.toDate().getTime() || 0; return ts >= from && ts <= to && (h.detail.toLowerCase().includes(term) || h.customerName?.toLowerCase().includes(term)) && (!type || h.saleMode === type); });
-            document.getElementById('history-list').innerHTML = filtered.sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)).map(h => `<tr class="border-b border-gray-800 text-xs"><td class="p-4 text-gray-500">${h.date?.toDate().toLocaleString() || '-'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-700">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-gray-300">${h.customerName || 'Mostrador'}</td><td class="p-4 text-gray-400 max-w-xs truncate">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join('');
+            const fromEl = document.getElementById('hist-from');
+            const toEl = document.getElementById('hist-to');
+            const searchEl = document.getElementById('hist-search');
+            const typeEl = document.getElementById('hist-type');
+            
+            const from = fromEl.value ? new Date(fromEl.value + "T00:00:00").getTime() : 0;
+            const to = toEl.value ? new Date(toEl.value + "T23:59:59").getTime() : Infinity;
+            const term = searchEl.value.toLowerCase();
+            const type = typeEl.value;
+            
+            const filtered = historyRaw.filter(h => { 
+                const ts = h.date?.toDate ? h.date.toDate().getTime() : 0; 
+                return ts >= from && ts <= to && (h.detail.toLowerCase().includes(term) || h.customerName?.toLowerCase().includes(term)) && (!type || h.saleMode === type); 
+            });
+            
+            document.getElementById('history-list').innerHTML = filtered.sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)).map(h => `<tr class="border-b border-gray-800 text-xs"><td class="p-4 text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-700">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-gray-300">${h.customerName || 'Mostrador'}</td><td class="p-4 text-gray-400 max-w-xs truncate">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join('');
         };
 
         function updateSupplierSelect() {
             const s = document.getElementById('p-supplier'); const v = s.value;
-            s.innerHTML = '<option value="">Seleccionar</option>' + suppliers.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
-            s.value = v;
+            if (s) {
+                s.innerHTML = '<option value="">Seleccionar</option>' + suppliers.map(x => `<option value="${x.id}">${x.name}</option>`).join('');
+                s.value = v;
+            }
         }
 
         function updateDatalists() {
             const ns = [...new Set(products.map(p => p.name))];
             const bs = [...new Set(products.map(p => p.brand))];
-            document.getElementById('list-product-names').innerHTML = ns.map(n => `<option value="${n}">`).join('');
-            document.getElementById('list-brands').innerHTML = bs.map(b => `<option value="${b}">`).join('');
+            const nEl = document.getElementById('list-product-names');
+            const bEl = document.getElementById('list-brands');
+            if (nEl) nEl.innerHTML = ns.map(n => `<option value="${n}">`).join('');
+            if (bEl) bEl.innerHTML = bs.map(b => `<option value="${b}">`).join('');
         }
 
+        // Arranque de la aplicación
         setSaleType('presencial');
-        switchTab('stock');
+        // Usar setTimeout para asegurar que el DOM y los iconos estén listos
+        setTimeout(() => {
+            switchTab('stock');
+        }, 100);
+
     </script>
 </body>
 </html>
