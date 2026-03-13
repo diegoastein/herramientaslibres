@@ -315,17 +315,29 @@
         let auth = null;
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'herramientas-libres-pro';
-        let firebaseConfig = {};
-        try {
-            firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        } catch (e) {
-            console.warn("Firebase config not found.");
+        
+        // Configuración por defecto (Placeholder para el usuario)
+        let firebaseConfig = {
+            apiKey: "AIzaSyDsh5-ZzwjO98S1zIXUx6Sw2ICd5SwiHpM",
+  authDomain: "herramientaslibres-61449.firebaseapp.com",
+  projectId: "herramientaslibres-61449",
+  storageBucket: "herramientaslibres-61449.firebasestorage.app",
+  messagingSenderId: "184897754209",
+  appId: "1:184897754209:web:a68503fa066d8568320620"
+        };
+
+        // Si estamos en el Canvas, usamos la configuración inyectada automáticamente
+        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+            try {
+                firebaseConfig = JSON.parse(__firebase_config);
+            } catch (e) {
+                console.warn("No se pudo parsear la config de Firebase del entorno.");
+            }
         }
 
         const fmt = (n) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
 
-        // --- UI & RENDER FUNCTIONS (Exposed to window for accessibility) ---
-
+        // --- UI & RENDER FUNCTIONS ---
         window.renderStock = () => {
             const sl = document.getElementById('stock-list');
             if(!sl) return;
@@ -384,7 +396,6 @@
             const sBal = document.getElementById('stat-balance'); if(sBal) sBal.innerText = fmt(totalSales - totalExpenses);
         };
 
-        // --- DATASET UPDATES ---
         window.updateSupplierSelect = () => {
             const s = document.getElementById('p-supplier'); const v = s?.value;
             if (s) {
@@ -405,7 +416,7 @@
         // --- FORM HANDLERS ---
         const handleProductSubmit = async (e) => {
             e.preventDefault();
-            if (!db || !auth?.currentUser) return showToast("No autenticado");
+            if (!db || !auth?.currentUser) return showToast("No autenticado o sin config");
             const id = document.getElementById('p-id').value;
             const data = {
                 name: document.getElementById('p-name').value,
@@ -465,7 +476,13 @@
 
         // --- INICIALIZACIÓN ---
         const startApp = async () => {
-            if (firebaseConfig.apiKey) {
+            // Verificamos si hay configuración válida antes de intentar conectar
+            const isDefault = firebaseConfig.apiKey === "TU_API_KEY_AQUI";
+            
+            if (isDefault) {
+                document.getElementById('auth-status').innerText = 'ESPERANDO CLAVES DE FIREBASE...';
+                console.info("Por favor, reemplaza el objeto 'firebaseConfig' con tus claves reales para habilitar la persistencia.");
+            } else {
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
@@ -488,8 +505,6 @@
                         document.getElementById('auth-status').innerText = 'Sin Sesión';
                     }
                 });
-            } else {
-                document.getElementById('auth-status').innerText = 'Modo Local (Offline)';
             }
             
             const fP = document.getElementById('form-product'); if(fP) fP.onsubmit = handleProductSubmit;
@@ -515,7 +530,7 @@
             onSnapshot(ePath, sn => { expenses = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderExpenses(); window.calculateStats(); });
         }
 
-        // --- GLOBAL NAVIGATION FUNCTIONS ---
+        // --- NAVIGATION & MODALS ---
         window.switchTab = (id) => {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
             const target = document.getElementById(`sec-${id}`);
@@ -618,7 +633,7 @@
         };
 
         window.processSale = async () => {
-            if(!db || !auth?.currentUser) return showToast("Sin conexión");
+            if(!db || !auth?.currentUser) return showToast("Sin conexión a base de datos");
             if(cart.length === 0) return showToast("Carrito vacío");
             const searchVal = document.getElementById('sale-customer-search').value.trim();
             if(!searchVal) return showToast("Identifique al cliente");
@@ -648,11 +663,36 @@
                     type: 'venta', saleMode: saleType, customerId, customerName, detail, amount: total, items: cart, date: serverTimestamp()
                 });
 
-                showToast("Venta Exitosa!"); cart = []; renderCart();
+                // Generar PDF
+                generateInvoice(cart, total, customerName);
+
+                showToast("Venta Exitosa y PDF generado!"); cart = []; renderCart();
                 document.getElementById('sale-customer-search').value = ''; document.getElementById('c-phone').value = ''; document.getElementById('c-email').value = '';
                 selectedCustomerId = null;
             } catch(e) { showToast("Error al procesar"); }
         };
+
+        function generateInvoice(items, total, customer) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFillColor(30, 30, 30); doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(245, 158, 11); doc.setFontSize(22); doc.text("HERRAMIENTAS LIBRES", 15, 25);
+            doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.text("Comprobante de Venta", 15, 32);
+            doc.text(`Cliente: ${customer}`, 150, 25);
+            doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 150, 32);
+
+            const tableData = items.map(i => [i.name, i.brand, i.qty, fmt(i.price), fmt(i.price * i.qty)]);
+            doc.autoTable({
+                startY: 50,
+                head: [['Producto', 'Marca', 'Cant.', 'Unitario', 'Subtotal']],
+                body: tableData,
+                theme: 'grid',
+                headStyles: { fillColor: [245, 158, 11], textColor: [0, 0, 0] }
+            });
+            doc.setTextColor(0, 0, 0); doc.setFontSize(14);
+            doc.text(`TOTAL: ${fmt(total)}`, 140, doc.lastAutoTable.finalY + 15);
+            doc.save(`Venta_${customer.replace(/\s+/g, '_')}.pdf`);
+        }
 
         window.viewClientHistory = (id, name) => {
             const clientSales = historyRaw.filter(h => h.customerId === id);
@@ -682,8 +722,6 @@
             renderCart();
         };
         window.removeFromCart = (id) => { cart = cart.filter(i => i.id !== id); renderCart(); };
-        window.clearCart = () => { cart = []; renderCart(); };
-
         function renderCart() {
             const c = document.getElementById('cart-items');
             if(!c) return;
