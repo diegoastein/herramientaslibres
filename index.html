@@ -40,12 +40,17 @@
             color: #f59e0b;
         }
 
-        .modal-scroll { max-height: 85vh; overflow-y: auto; }
+        .modal-scroll { max-height: 75vh; overflow-y: auto; padding-right: 4px; }
         .tab-content { transition: opacity 0.2s ease-in-out; }
         
         #login-overlay {
             background-color: #121212;
             z-index: 9999;
+        }
+
+        /* Prevenir que el modal se oculte bajo el teclado en móviles */
+        @media (max-width: 768px) {
+            .modal-container { margin-top: 2rem; margin-bottom: 2rem; }
         }
     </style>
 </head>
@@ -299,12 +304,12 @@
 
     <!-- MODAL PRODUCTO -->
     <div id="modal-product" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
-        <div class="bg-card w-full max-w-2xl rounded-2xl border border-gray-700 overflow-hidden max-h-[95vh] flex flex-col">
+        <div class="bg-card w-full max-w-2xl rounded-2xl border border-gray-700 overflow-hidden max-h-[95vh] flex flex-col modal-container">
             <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-black/20">
                 <h3 class="text-xl font-bold">Herramienta</h3>
                 <button onclick="closeModal('modal-product')"><i data-lucide="x"></i></button>
             </div>
-            <div class="flex-1 modal-scroll p-6">
+            <div class="flex-1 overflow-y-auto p-6">
                 <form id="form-product" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input type="hidden" id="p-id">
                     <div class="md:col-span-2"><label class="text-xs text-gray-500">Nombre</label><input type="text" id="p-name" list="list-product-names" required class="w-full p-2 rounded outline-none border border-gray-700"></div>
@@ -326,9 +331,9 @@
                         </div>
                         <input type="hidden" id="p-image-data">
                     </div>
-                    <div class="md:col-span-2 flex gap-2 pt-4">
-                        <button type="submit" class="btn-primary flex-1 py-4 rounded-xl shadow-lg hover:scale-[1.02] active:scale-95 transition-all">
-                            Guardar Producto
+                    <div class="md:col-span-2 flex gap-2 pt-6 pb-2">
+                        <button type="submit" class="btn-primary flex-1 py-4 rounded-xl shadow-lg hover:scale-[1.01] active:scale-95 transition-all text-lg">
+                            Guardar Cambios
                         </button>
                     </div>
                 </form>
@@ -501,7 +506,7 @@
                 };
             }
 
-            // Búsqueda en Ventas
+            // --- Búsqueda en Ventas ---
             const sInp = document.getElementById('search-product');
             if (sInp) {
                 sInp.addEventListener('input', () => {
@@ -515,7 +520,7 @@
                         (p.code && p.code.toLowerCase().includes(t))
                     );
                     r.innerHTML = f.slice(0,5).map(p => `
-                        <div onclick="window.addToCartById('${p.id}')" class="flex items-center justify-between p-3 bg-white/5 hover:bg-accent-color/10 rounded-lg cursor-pointer border border-transparent hover:border-accent-color/20">
+                        <div onclick="window.addToCartById('${p.id}')" class="flex items-center justify-between p-3 bg-white/5 hover:bg-amber-500/10 rounded-lg cursor-pointer border border-transparent hover:border-amber-500/20">
                             <div class="flex items-center gap-3">
                                 <img src="${p.image || ''}" class="w-10 h-10 rounded object-cover" onerror="this.src='https://via.placeholder.com/40'">
                                 <div><p class="font-bold text-sm text-white">${p.name}</p><p class="text-[10px] text-gray-500 uppercase">${p.brand || 'S/M'} - ${p.model || 'S/M'} | STOCK: ${p.stock}</p></div>
@@ -525,7 +530,7 @@
                 });
             }
 
-            // Vinculación segura de formularios
+            // Vincular formularios existentes de forma segura
             const fProd = document.getElementById('form-product'); if(fProd) fProd.onsubmit = handleProductSubmit;
             const fSupp = document.getElementById('form-supplier'); if(fSupp) fSupp.onsubmit = handleSupplierSubmit;
             const fExp = document.getElementById('form-expense'); if(fExp) fExp.onsubmit = handleExpenseSubmit;
@@ -786,23 +791,46 @@
         window.openModal = (id) => { const el = document.getElementById(id); if (el) { el.classList.remove('hidden'); el.classList.add('flex'); lucide.createIcons(); } };
         window.prepareNew = (id) => { const el = document.getElementById(id); if (el) { const form = el.querySelector('form'); if(form) form.reset(); const hid = el.querySelector('input[type="hidden"]'); if(hid) hid.value = ''; const picC = document.getElementById('image-preview-container'); if (picC && id === 'modal-product') picC.innerHTML = ''; window.openModal(id); } };
         window.closeModal = (id) => { const el = document.getElementById(id); if (el) { el.classList.add('hidden'); el.classList.remove('flex'); } };
-        window.handleImageUpload = (e) => { const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = (ev) => { const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); const w = 300; const s = w / i.width; c.width = w; c.height = i.height * s; const ctx = c.getContext('2d'); ctx.drawImage(i, 0, 0, c.width, c.height); const b = c.toDataURL('image/jpeg', 0.7); document.getElementById('p-image-data').value = b; const pc = document.getElementById('image-preview-container'); if (pc) pc.innerHTML = `<img src="${b}" class="w-full h-full object-cover">`; }; i.src = ev.target.result; }; r.readAsDataURL(f); };
+        
+        window.handleImageUpload = (e) => { 
+            const f = e.target.files[0]; if(!f) return; 
+            const r = new FileReader(); 
+            r.onload = (ev) => { 
+                const i = new Image(); 
+                i.onload = () => { 
+                    const c = document.createElement('canvas'); 
+                    // Optimización agresiva: 250px de ancho para soportar 500+ productos sin lentitud
+                    const w = 250; const s = w / i.width; 
+                    c.width = w; c.height = i.height * s; 
+                    const ctx = c.getContext('2d'); 
+                    ctx.drawImage(i, 0, 0, c.width, c.height); 
+                    // Calidad 0.5 para equilibrar visibilidad y peso en la base de datos
+                    const b = c.toDataURL('image/jpeg', 0.5); 
+                    document.getElementById('p-image-data').value = b; 
+                    const pc = document.getElementById('image-preview-container'); if (pc) pc.innerHTML = `<img src="${b}" class="w-full h-full object-cover">`; 
+                }; 
+                i.src = ev.target.result; 
+            }; 
+            r.readAsDataURL(f); 
+        };
 
         window.editProductById = (id) => {
             const p = products.find(x => x.id === id);
             if(!p) return;
-            document.getElementById('p-id').value = p.id;
-            document.getElementById('p-name').value = p.name;
-            document.getElementById('p-brand').value = p.brand;
-            document.getElementById('p-model').value = p.model || '';
-            document.getElementById('p-code').value = p.code;
-            document.getElementById('p-supplier').value = p.supplierId || '';
-            document.getElementById('p-stock').value = p.stock;
-            document.getElementById('p-cost').value = p.cost;
-            document.getElementById('p-price').value = p.price;
-            document.getElementById('p-image-data').value = p.image || '';
+            const pIdField = document.getElementById('p-id'); if(pIdField) pIdField.value = p.id;
+            const pNameField = document.getElementById('p-name'); if(pNameField) pNameField.value = p.name || '';
+            const pBrandField = document.getElementById('p-brand'); if(pBrandField) pBrandField.value = p.brand || '';
+            const pModelField = document.getElementById('p-model'); if(pModelField) pModelField.value = p.model || '';
+            const pCodeField = document.getElementById('p-code'); if(pCodeField) pCodeField.value = p.code || '';
+            const pSupField = document.getElementById('p-supplier'); if(pSupField) pSupField.value = p.supplierId || '';
+            const pStockField = document.getElementById('p-stock'); if(pStockField) pStockField.value = p.stock || 0;
+            const pCostField = document.getElementById('p-cost'); if(pCostField) pCostField.value = p.cost || 0;
+            const pPriceField = document.getElementById('p-price'); if(pPriceField) pPriceField.value = p.price || 0;
+            const pImgField = document.getElementById('p-image-data'); if(pImgField) pImgField.value = p.image || '';
+            
             const pc = document.getElementById('image-preview-container');
             if(pc) pc.innerHTML = p.image ? `<img src="${p.image}" class="w-full h-full object-cover">` : '';
+            
             window.openModal('modal-product');
         };
 
@@ -813,16 +841,49 @@
         window.signOutUser = () => { if(confirm("¿Cerrar sesión?")) signOut(auth); };
         window.showToast = (m) => { const t = document.getElementById('toast'); if(t){ t.innerText = m; t.classList.remove('opacity-0'); setTimeout(() => t.classList.add('opacity-0'), 3000); } };
         window.renderCart = () => { const c = document.getElementById('cart-items'); if(!c) return; if(cart.length === 0) c.innerHTML = '<div class="text-gray-500 text-center py-8 italic text-xs uppercase tracking-widest">Carrito vacío</div>'; else c.innerHTML = cart.map(i => `<div class="flex justify-between items-center bg-black/30 p-3 rounded-lg border border-gray-800"><div><p class="text-xs font-bold uppercase text-white">${i.name}</p><p class="text-[10px] text-gray-500">${i.brand || 'S/M'} | ${fmt(i.price)} x ${i.qty}</p></div><div class="flex items-center gap-3"><span class="font-bold accent-color text-sm">${fmt(i.price * i.qty)}</span><button onclick="window.removeFromCart('${i.id}')" class="text-red-400"><i data-lucide="x-circle" class="w-4 h-4"></i></button></div></div>`).join(''); document.getElementById('cart-total').innerText = fmt(cart.reduce((s, i) => s + (i.price * i.qty), 0)); document.getElementById('cart-count').innerText = cart.length; lucide.createIcons(); };
-        window.exportStock = (onlyFiltered) => { const searchVal = document.getElementById('stock-search').value.toLowerCase(); let data = onlyFiltered ? products.filter(p => (p.name && p.name.toLowerCase().includes(searchVal)) || (p.brand && p.brand.toLowerCase().includes(searchVal)) || (p.model && p.model.toLowerCase().includes(searchVal))) : products; if(!data.length) return showToast("Sin datos"); let csv = "\uFEFFNombre,Marca,Modelo,Codigo,Stock,Costo,Precio Final\n"; data.forEach(p => { csv += `"${p.name || ''}","${p.brand || ''}","${p.model || ''}","${p.code || ''}",${p.stock || 0},${p.cost || 0},${p.price || 0}\n`; }); const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `Stock_${onlyFiltered ? 'Filtrado' : 'Completo'}_${new Date().toLocaleDateString()}.csv`; a.click(); };
+        
+        window.exportStock = (onlyFiltered) => { 
+            const searchVal = document.getElementById('stock-search').value.toLowerCase(); 
+            let data = onlyFiltered ? products.filter(p => (p.name && p.name.toLowerCase().includes(searchVal)) || (p.brand && p.brand.toLowerCase().includes(searchVal)) || (p.model && p.model.toLowerCase().includes(searchVal))) : products; 
+            if(!data.length) return showToast("Sin datos"); 
+            let csv = "\uFEFFNombre,Marca,Modelo,Codigo,Stock,Costo,Precio Final\n"; 
+            data.forEach(p => { csv += `"${p.name || ''}","${p.brand || ''}","${p.model || ''}","${p.code || ''}",${p.stock || 0},${p.cost || 0},${p.price || 0}\n`; }); 
+            const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); 
+            const url = URL.createObjectURL(blob); 
+            const a = document.createElement('a'); a.href = url; a.download = `Stock_${onlyFiltered ? 'Filtrado' : 'Completo'}_${new Date().toLocaleDateString()}.csv`; a.click(); 
+        };
+
         window.viewLargeImage = (src) => { const v = document.getElementById('image-viewer'); const i = document.getElementById('enlarged-image'); if(v && i && src) { i.src = src; v.classList.remove('hidden'); v.classList.add('flex'); lucide.createIcons(); } };
         window.closeImageViewer = () => { const v = document.getElementById('image-viewer'); if(v) { v.classList.add('hidden'); v.classList.remove('flex'); } };
         window.removeFromCart = (id) => { cart = cart.filter(i => i.id !== id); window.renderCart(); };
         window.updateSupplierSelect = () => { const s = document.getElementById('p-supplier'); if (s) s.innerHTML = '<option value="">Seleccionar</option>' + suppliers.map(x => `<option value="${x.id}">${x.name}</option>`).join(''); };
         window.updateDatalists = () => { const nEl = document.getElementById('list-product-names'); const bEl = document.getElementById('list-brands'); if (nEl) nEl.innerHTML = [...new Set(products.map(p => p.name))].map(n => `<option value="${n}">`).join(''); if (bEl) bEl.innerHTML = [...new Set(products.map(p => p.brand))].map(b => `<option value="${b}">`).join(''); };
         window.calculateStats = () => { const m = document.getElementById('accounting-month').value; const fs = historyRaw.filter(h => h.date && h.date.toDate().toISOString().slice(0,7) === m); const fe = expenses.filter(e => e.date && e.date.toDate().toISOString().slice(0,7) === m); document.getElementById('stat-sales').innerText = fmt(fs.reduce((s,h) => s + (h.amount || 0), 0)); document.getElementById('stat-expenses').innerText = fmt(fe.reduce((s,e) => s + (e.amount || 0), 0)); document.getElementById('stat-balance').innerText = fmt(fs.reduce((s,h) => s + (h.amount || 0), 0) - fe.reduce((s,e) => s + (e.amount || 0), 0)); };
-        window.filterHistory = () => { const hl = document.getElementById('history-list'); if(!hl) return; const fFrom = document.getElementById('hist-from'); const fTo = document.getElementById('hist-to'); const fSearch = document.getElementById('hist-search'); const fType = document.getElementById('hist-type'); const from = fFrom?.value ? new Date(fFrom.value + "T00:00:00").getTime() : 0; const to = fTo?.value ? new Date(fTo.value + "T23:59:59").getTime() : Infinity; const term = fSearch?.value.toLowerCase() || ""; const type = fType?.value; let f = historyRaw.filter(h => { const ts = h.date?.toDate ? h.date.toDate().getTime() : 0; const matchesSearch = h.detail.toLowerCase().includes(term) || (h.customerName && h.customerName.toLowerCase().includes(term)); const matchesType = !type || h.saleMode === type; return ts >= from && ts <= to && matchesSearch && matchesType; }).sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)); if(!fFrom?.value && !fTo?.value && !term && !type) f = f.slice(0,10); hl.innerHTML = f.map(h => `<tr class="border-b border-gray-800 text-xs"><td class="p-4 text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-700">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-gray-300">${h.customerName || 'Mostrador'}</td><td class="p-4 text-gray-400 truncate">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join(''); };
+        
+        window.filterHistory = () => { 
+            const hl = document.getElementById('history-list'); if(!hl) return; 
+            const fFrom = document.getElementById('hist-from'); const fTo = document.getElementById('hist-to');
+            const fSearch = document.getElementById('hist-search'); const fType = document.getElementById('hist-type');
+            const from = fFrom?.value ? new Date(fFrom.value + "T00:00:00").getTime() : 0;
+            const to = fTo?.value ? new Date(fTo.value + "T23:59:59").getTime() : Infinity;
+            const term = fSearch?.value.toLowerCase() || ""; const type = fType?.value;
+            let f = historyRaw.filter(h => {
+                const ts = h.date?.toDate ? h.date.toDate().getTime() : 0;
+                const ms = h.detail.toLowerCase().includes(term) || (h.customerName && h.customerName.toLowerCase().includes(term));
+                const mt = !type || h.saleMode === type;
+                return ts >= from && ts <= to && ms && mt;
+            }).sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)); 
+            if(!fFrom?.value && !fTo?.value && !term && !type) f = f.slice(0,10); 
+            hl.innerHTML = f.map(h => `<tr class="border-b border-gray-800 text-xs"><td class="p-4 text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-700">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-gray-300">${h.customerName || 'Mostrador'}</td><td class="p-4 text-gray-400 truncate">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join(''); 
+        };
+
         window.editExpense = (e) => { document.getElementById('e-id').value = e.id; document.getElementById('e-concept').value = e.concept; document.getElementById('e-category').value = e.category; document.getElementById('e-amount').value = e.amount; window.openModal('modal-expense'); };
-        window.viewClientHistory = (id, name) => { const cs = historyRaw.filter(h => h.customerId === id); document.getElementById('client-history-name').innerText = `Compras de ${name}`; document.getElementById('client-history-content').innerHTML = cs.length ? cs.map(h => `<div class="mb-4 p-4 bg-black/30 rounded border border-gray-800"><div class="flex justify-between text-xs mb-1"><span class="text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleDateString() : 'Reciente'}</span><span class="font-bold uppercase text-amber-500">${h.saleMode}</span></div><p class="text-sm text-white">${h.detail}</p><p class="text-right font-bold mt-2 text-amber-500">${fmt(h.amount)}</p></div>`).join('') : '<p class="text-center italic text-gray-500">Sin compras registradas</p>'; window.openModal('modal-client-history'); };
+        window.viewClientHistory = (id, name) => { 
+            const cs = historyRaw.filter(h => h.customerId === id); 
+            document.getElementById('client-history-name').innerText = `Compras de ${name}`; 
+            document.getElementById('client-history-content').innerHTML = cs.length ? cs.map(h => `<div class="mb-4 p-4 bg-black/30 rounded border border-gray-800"><div class="flex justify-between text-xs mb-1"><span class="text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleDateString() : 'Reciente'}</span><span class="font-bold uppercase text-amber-500">${h.saleMode}</span></div><p class="text-sm text-white">${h.detail}</p><p class="text-right font-bold mt-2 text-amber-500">${fmt(h.amount)}</p></div>`).join('') : '<p class="text-center italic text-gray-500">Sin compras registradas</p>'; 
+            window.openModal('modal-client-history'); 
+        };
 
         window.addEventListener('load', startApp);
     </script>
