@@ -164,7 +164,7 @@
                 <h2 class="text-2xl font-bold">Inventario</h2>
                 <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
                     <div class="relative flex-1 min-w-[200px] md:w-64">
-                        <input type="text" id="stock-search" placeholder="Buscar por herramienta o proveedor..." class="w-full p-2 rounded text-sm outline-none pl-8 shadow-sm" oninput="window.renderStock()">
+                        <input type="text" id="stock-search" placeholder="Herramienta o Proveedor..." class="w-full p-2 rounded text-sm outline-none pl-8 shadow-sm" oninput="window.renderStock()">
                         <i data-lucide="search" class="absolute left-2 top-2.5 w-4 h-4 text-gray-400"></i>
                     </div>
                     <div class="flex gap-2">
@@ -240,7 +240,7 @@
                         <div class="grid grid-cols-1 gap-3">
                             <div>
                                 <label class="block text-[10px] opacity-60 uppercase font-bold">Cliente (Busca o Registra)</label>
-                                <input type="text" id="sale-customer-search" placeholder="Nombre para buscar..." class="w-full p-2 text-sm rounded outline-none shadow-sm" oninput="suggestCustomers(this.value)">
+                                <input type="text" id="sale-customer-search" placeholder="Nombre para buscar..." class="w-full p-2 text-sm rounded outline-none shadow-sm" oninput="window.suggestCustomers(this.value)">
                                 <div id="customer-suggestions" class="rounded mt-1 hidden max-h-40 overflow-y-auto border border-gray-700 z-[60] shadow-2xl"></div>
                             </div>
                             <div id="new-customer-fields" class="space-y-2 hidden border-l-2 border-amber-500 pl-3 pt-2 bg-black/5 p-2 rounded">
@@ -327,7 +327,7 @@
             </div>
             <div class="bg-card rounded-xl border border-gray-800 overflow-hidden shadow-lg">
                 <table class="w-full text-left">
-                    <thead class="bg-black/5 border-b border-gray-800 text-xs uppercase opacity-70">
+                    <thead class="bg-black/10 border-b border-gray-800 text-xs uppercase opacity-70">
                         <tr><th class="p-4">Fecha</th><th class="p-4">Concepto</th><th class="p-4">Categoría</th><th class="p-4">Monto</th><th class="p-4">Acciones</th></tr>
                     </thead>
                     <tbody id="expense-list"></tbody>
@@ -337,7 +337,7 @@
 
     </main>
 
-    <!-- MODAL PRODUCTO -->
+    <!-- MODALES -->
     <div id="modal-product" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
         <div class="bg-card w-full max-w-2xl rounded-2xl border border-gray-700 overflow-hidden max-h-[95vh] flex flex-col modal-container shadow-2xl">
             <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-black/5">
@@ -376,46 +376,6 @@
         </div>
     </div>
 
-    <!-- MODAL PROVEEDOR -->
-    <div id="modal-supplier" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
-        <div class="bg-card w-full max-w-lg rounded-2xl border border-gray-700 overflow-hidden shadow-2xl">
-            <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-black/5"><h3 class="text-xl font-bold">Proveedor</h3><button onclick="closeModal('modal-supplier')"><i data-lucide="x"></i></button></div>
-            <form id="form-supplier" class="p-6 space-y-4">
-                <input type="hidden" id="s-id">
-                <div><label class="text-xs opacity-60">Razón Social</label><input type="text" id="s-name" required class="w-full p-2 rounded outline-none shadow-sm"></div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div><label class="text-xs opacity-60">WhatsApp</label><input type="text" id="s-whatsapp" class="w-full p-2 rounded outline-none shadow-sm"></div>
-                    <div><label class="text-xs opacity-60">Teléfono</label><input type="text" id="s-phone" class="w-full p-2 rounded outline-none shadow-sm"></div>
-                </div>
-                <div><label class="text-xs opacity-60">Email</label><input type="email" id="s-email" class="w-full p-2 rounded outline-none shadow-sm"></div>
-                <div><label class="text-xs opacity-60">Domicilio</label><input type="text" id="s-address" class="w-full p-2 rounded outline-none shadow-sm"></div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div><label class="text-xs opacity-60">Ciudad</label><input type="text" id="s-city" class="w-full p-2 rounded outline-none shadow-sm"></div>
-                    <div><label class="text-xs opacity-60">País</label><input type="text" id="s-country" value="Argentina" class="w-full p-2 rounded outline-none shadow-sm"></div>
-                </div>
-                <div class="flex gap-2 pt-4"><button type="submit" class="btn-primary flex-1 py-3 rounded-lg shadow-md">Guardar</button></div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL CLIENTE -->
-    <div id="modal-client" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
-        <div class="bg-card w-full max-w-lg rounded-2xl border border-gray-700 overflow-hidden shadow-2xl">
-            <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-black/5"><h3 class="text-xl font-bold">Editar Cliente</h3><button onclick="closeModal('modal-client')"><i data-lucide="x"></i></button></div>
-            <form id="form-client" class="p-6 space-y-4">
-                <input type="hidden" id="edit-c-id">
-                <div class="grid grid-cols-2 gap-2">
-                    <div><label class="text-xs opacity-60">Nombre</label><input type="text" id="edit-c-name" required class="w-full p-2 rounded outline-none shadow-sm"></div>
-                    <div><label class="text-xs opacity-60">Apellido</label><input type="text" id="edit-c-surname" required class="w-full p-2 rounded outline-none shadow-sm"></div>
-                </div>
-                <div><label class="text-xs opacity-60">WhatsApp/Tel</label><input type="text" id="edit-c-phone" class="w-full p-2 rounded outline-none shadow-sm"></div>
-                <div><label class="text-xs opacity-60">Email</label><input type="email" id="edit-c-email" class="w-full p-2 rounded outline-none shadow-sm"></div>
-                <div class="flex gap-2 pt-4"><button type="submit" class="btn-primary flex-1 py-3 rounded-lg shadow-md">Guardar Cambios</button></div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL HISTORIAL CLIENTE -->
     <div id="modal-client-history" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
         <div class="bg-card w-full max-w-2xl rounded-2xl border border-gray-700 overflow-hidden shadow-2xl">
             <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-black/5">
@@ -426,35 +386,14 @@
         </div>
     </div>
 
-    <!-- MODAL POST-VENTA -->
-    <div id="modal-success-sale" class="fixed inset-0 bg-black/90 z-[1000] hidden items-center justify-center p-4">
-        <div class="bg-card p-8 rounded-2xl border border-gray-800 w-full max-w-md shadow-2xl text-center">
-            <div class="p-4 bg-green-500/10 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-                <i data-lucide="check-circle" class="text-green-600 w-12 h-12"></i>
-            </div>
-            <h2 class="text-2xl font-bold mb-2 text-adaptive">¡Venta Exitosa!</h2>
-            <p class="text-xs opacity-60 mb-8 text-adaptive">El registro se ha guardado correctamente.</p>
-            <div class="flex flex-col gap-3">
-                <button id="btn-download-pdf" class="btn-primary py-4 rounded-xl flex items-center justify-center gap-2 shadow-md">
-                    <i data-lucide="download"></i> Descargar Factura PDF
-                </button>
-                <button id="btn-share-pdf" class="bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-md">
-                    <i data-lucide="share-2"></i> Compartir Factura
-                </button>
-                <button onclick="closeModal('modal-success-sale')" class="text-gray-500 hover:text-adaptive pt-4 text-sm font-medium transition-colors">
-                    Volver a Ventas
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- VISOR IMAGENES -->
     <div id="image-viewer" class="fixed inset-0 bg-black/95 z-[10000] hidden items-center justify-center p-4" onclick="window.closeImageViewer()">
         <div class="relative max-w-4xl max-h-screen">
             <button class="absolute -top-12 right-0 text-white hover:text-accent-color transition-colors"><i data-lucide="x" class="w-10 h-10"></i></button>
             <img id="enlarged-image" src="" class="max-w-full max-h-[85vh] rounded-lg shadow-2xl border border-gray-600 bg-white/5">
         </div>
     </div>
+
+    <div id="toast" class="fixed bottom-28 md:bottom-12 right-8 bg-accent text-black px-6 py-3 rounded-full shadow-2xl font-bold opacity-0 transition-all z-[200]"></div>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
@@ -478,7 +417,8 @@
 
         const fmt = (n) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
 
-        // --- EXPOSICIÓN GLOBAL (CRÍTICO PARA MÓDULOS) ---
+        // --- ASIGNACIÓN TEMPRANA DE FUNCIONES AL OBJETO WINDOW (PARA EVITAR TYPEERRORS) ---
+        
         window.toggleTheme = () => {
             const isDark = document.body.classList.toggle('dark-mode');
             const icon = document.getElementById('theme-icon');
@@ -492,7 +432,7 @@
         window.setSaleType = (t) => { 
             saleType = t; 
             const bP = document.getElementById('btn-presencial'); const bO = document.getElementById('btn-online'); 
-            if(bP) bP.className = t === 'presencial' ? 'py-2 rounded border border-amber-500 bg-amber-500/10 text-amber-600 font-bold text-xs shadow-inner' : 'py-2 rounded border border-gray-300 text-adaptive text-xs';
+            if(bP) bP.className = t === 'presencial' ? 'py-2 rounded border border-amber-500 bg-amber-500/10 text-amber-600 font-bold text-xs shadow-inner' : 'py-2 rounded border border-gray-700 text-adaptive text-xs';
             if(bO) bO.className = t === 'online' ? 'py-2 rounded border border-amber-500 bg-amber-500/10 text-amber-600 font-bold text-xs shadow-inner' : 'py-2 rounded border border-gray-700 text-adaptive text-xs';
         };
 
@@ -506,12 +446,108 @@
             window.renderCart();
         };
 
-        window.editProductById = (id) => {
-            const p = products.find(x => x.id === id); if(!p) return;
-            const f = { 'p-id': p.id, 'p-name': p.name, 'p-brand': p.brand, 'p-model': p.model, 'p-code': p.code, 'p-supplier': p.supplierId, 'p-stock': p.stock, 'p-cost': p.cost, 'p-price': p.price, 'p-image-data': p.image };
-            Object.keys(f).forEach(k => { const el = document.getElementById(k); if(el) el.value = f[k] || ''; });
-            const pc = document.getElementById('image-preview-container'); if(pc) pc.innerHTML = p.image ? `<img src="${p.image}" class="w-full h-full object-cover">` : '';
-            window.openModal('modal-product');
+        window.renderCart = () => { 
+            const c = document.getElementById('cart-items'); if(!c) return; 
+            if(cart.length === 0) c.innerHTML = '<div class="opacity-40 text-center py-8 italic text-xs uppercase tracking-widest text-adaptive">Carrito vacío</div>'; 
+            else c.innerHTML = cart.map(i => `<div class="flex justify-between items-center bg-black/5 p-3 rounded-lg border border-gray-200 dark:border-gray-800"><div><p class="text-xs font-bold uppercase text-adaptive">${i.name}</p><p class="text-[10px] opacity-60 text-adaptive">${i.brand || 'S/M'} | ${fmt(i.price)} x ${i.qty}</p></div><div class="flex items-center gap-3"><span class="font-bold accent-color text-sm">${fmt(i.price * i.qty)}</span><button onclick="window.removeFromCart('${i.id}')" class="text-red-400 hover:scale-110 transition-transform"><i data-lucide="x-circle" class="w-4 h-4"></i></button></div></div>`).join(''); 
+            document.getElementById('cart-total').innerText = fmt(cart.reduce((s, i) => s + (i.price * i.qty), 0)); 
+            document.getElementById('cart-count').innerText = cart.length; 
+            lucide.createIcons(); 
+        };
+
+        window.renderStock = () => {
+            const sl = document.getElementById('stock-list'); if(!sl) return;
+            const sVal = document.getElementById('stock-search').value.toLowerCase();
+            let f = products.filter(p => {
+                const sName = suppliers.find(s => s.id === p.supplierId)?.name || 'S/P';
+                return (p.name && p.name.toLowerCase().includes(sVal)) || 
+                       (p.brand && p.brand.toLowerCase().includes(sVal)) || 
+                       (p.code && p.code.toLowerCase().includes(sVal)) ||
+                       (sName.toLowerCase().includes(sVal));
+            });
+            if (!sVal) f = [...f].sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 20);
+            sl.innerHTML = f.map(p => {
+                const sName = suppliers.find(s => s.id === p.supplierId)?.name || 'S/P';
+                return `<tr class="border-b border-gray-800 hover:bg-black/5 transition-colors">
+                    <td class="p-4"><img src="${p.image || ''}" onclick="window.viewLargeImage('${p.image}')" class="w-10 h-10 object-cover rounded bg-black/10 cursor-zoom-in shadow-inner" onerror="this.src='https://via.placeholder.com/40'"></td>
+                    <td class="p-4 font-medium text-adaptive">${p.name}</td>
+                    <td class="p-4 text-xs uppercase opacity-60">${p.brand || 'S/M'}</td>
+                    <td class="p-4 text-xs uppercase opacity-60">${p.model || 'S/M'}</td>
+                    <td class="p-4 text-xs font-bold text-amber-600 uppercase">${sName}</td>
+                    <td class="p-4 font-bold text-xs ${p.stock < 5 ? 'text-red-500' : 'text-green-600'}">${p.stock} UN</td>
+                    <td class="p-4 font-bold text-sm accent-color">${fmt(p.price)}</td>
+                    <td class="p-4 flex gap-2">
+                        <button onclick='window.editProductById("${p.id}")' class="opacity-60 hover:opacity-100 hover:text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                        <button onclick="window.deleteProduct('${p.id}')" class="opacity-60 hover:opacity-100 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>`;
+            }).join('');
+            lucide.createIcons();
+        };
+
+        window.renderSuppliers = () => {
+            const spl = document.getElementById('supplier-list'); if(!spl) return;
+            const sVal = document.getElementById('supplier-search').value.toLowerCase();
+            const f = suppliers.filter(s => (s.name && s.name.toLowerCase().includes(sVal)) || (s.city && s.city.toLowerCase().includes(sVal)));
+            spl.innerHTML = f.map(s => `<div class="bg-card p-6 rounded-xl border border-gray-800 relative group shadow-md"><div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity"><button onclick='window.editSupplier(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="window.deleteSupplier('${s.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div><h4 class="text-lg font-bold mb-2 text-adaptive">${s.name}</h4><div class="space-y-1 text-xs opacity-60"><p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${s.whatsapp || '-'}</p><p><i data-lucide="map-pin" class="inline w-3 h-3 mr-1"></i> ${s.city || 'S/C'}</p></div></div>`).join('');
+            lucide.createIcons();
+        };
+
+        window.renderCustomers = () => {
+            const el = document.getElementById('filter-clients'); if (!el) return;
+            const term = el.value.toLowerCase();
+            let f = customers.filter(c => (c.name && c.name.toLowerCase().includes(term)) || (c.surname && c.surname.toLowerCase().includes(term)));
+            if (!term) f = f.slice(0, 10);
+            const cl = document.getElementById('customer-list');
+            if (cl) cl.innerHTML = f.map(c => `<div class="bg-card p-6 rounded-xl border border-gray-800 relative group shadow-md"><div class="absolute top-4 right-4 flex gap-2"><button onclick='window.editCustomerById("${c.id}")' class="opacity-40 hover:opacity-100 hover:text-amber-500"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick="window.viewClientHistory('${c.id}', '${c.name} ${c.surname || ''}')" class="text-amber-500 hover:scale-110"><i data-lucide="history" class="w-5 h-5"></i></button></div><h4 class="text-lg font-bold mb-1 text-adaptive">${c.name} ${c.surname || ''}</h4><div class="text-xs opacity-60 space-y-1"><p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${c.phone || 'S/T'}</p><p><i data-lucide="mail" class="inline w-3 h-3 mr-1"></i> ${c.email || 'S/E'}</p></div></div>`).join('');
+            lucide.createIcons();
+        };
+
+        window.renderExpenses = () => {
+            const el = document.getElementById('expense-list'); if(!el) return;
+            const m = document.getElementById('accounting-month').value;
+            const f = expenses.filter(e => e.date && e.date.toDate().toISOString().slice(0, 7) === m);
+            el.innerHTML = f.map(e => `<tr class="border-b border-gray-800 hover:bg-black/5 transition-colors"><td class="p-4 text-xs opacity-60">${e.date?.toDate ? e.date.toDate().toLocaleDateString() : '-'}</td><td class="p-4 font-medium text-adaptive">${e.concept}</td><td class="p-4"><span class="text-[10px] bg-gray-200 dark:bg-gray-700/30 px-2 py-0.5 rounded uppercase font-bold text-adaptive">${e.category}</span></td><td class="p-4 font-bold text-red-600">${fmt(e.amount)}</td><td class="p-4 flex gap-2"><button onclick='window.editExpense(${JSON.stringify(e).replace(/'/g, "&apos;")})' class="opacity-40 hover:opacity-100 hover:text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="window.deleteExpense('${e.id}')" class="opacity-40 hover:opacity-100 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('');
+            lucide.createIcons();
+        };
+
+        window.calculateStats = () => {
+            const m = document.getElementById('accounting-month').value;
+            const fs = historyRaw.filter(h => h.date && h.date.toDate().toISOString().slice(0, 7) === m);
+            const fe = expenses.filter(e => e.date && e.date.toDate().toISOString().slice(0, 7) === m);
+            const ts = fs.reduce((s, h) => s + (h.amount || 0), 0);
+            const te = fe.reduce((s, e) => s + (e.amount || 0), 0);
+            const sSales = document.getElementById('stat-sales'); if(sSales) sSales.innerText = fmt(ts);
+            const sExp = document.getElementById('stat-expenses'); if(sExp) sExp.innerText = fmt(te);
+            const sBal = document.getElementById('stat-balance'); if(sBal) sBal.innerText = fmt(ts - te);
+        };
+
+        window.filterHistory = () => { 
+            const hl = document.getElementById('history-list'); if(!hl) return; 
+            const fF = document.getElementById('hist-from'); const fT = document.getElementById('hist-to');
+            const fS = document.getElementById('hist-search'); const fTy = document.getElementById('hist-type');
+            const from = fF?.value ? new Date(fF.value + "T00:00:00").getTime() : 0;
+            const to = fT?.value ? new Date(fT.value + "T23:59:59").getTime() : Infinity;
+            const term = fS?.value.toLowerCase() || ""; const type = fTy?.value;
+
+            let f = historyRaw.filter(h => {
+                const ts = h.date?.toDate ? h.date.toDate().getTime() : 0;
+                const matchesText = h.detail.toLowerCase().includes(term) || (h.customerName && h.customerName.toLowerCase().includes(term));
+                const matchesType = !type || h.saleMode === type;
+                // Búsqueda por proveedor en el historial
+                const hasSupplier = h.items?.some(item => suppliers.find(s => s.id === item.supplierId)?.name.toLowerCase().includes(term));
+                return ts >= from && ts <= to && (matchesText || hasSupplier) && matchesType;
+            }).sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)); 
+            
+            if(!fF?.value && !fT?.value && !term && !type) f = f.slice(0,10); 
+            hl.innerHTML = f.map(h => `<tr class="border-b border-gray-200 dark:border-gray-800 text-xs text-adaptive"><td class="p-4 opacity-60">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-200 dark:border-gray-800 font-bold">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-adaptive">${h.customerName || 'Mostrador'}</td><td class="p-4 opacity-70 truncate max-w-[200px]">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join(''); 
+        };
+
+        window.editCustomerById = (id) => {
+            const c = customers.find(x => x.id === id); if(!c) return;
+            const fields = { 'edit-c-id': c.id, 'edit-c-name': c.name, 'edit-c-surname': c.surname, 'edit-c-phone': c.phone, 'edit-c-email': c.email };
+            Object.keys(fields).forEach(k => { const el = document.getElementById(k); if(el) el.value = fields[k] || ''; });
+            window.openModal('modal-client');
         };
 
         window.editSupplier = (s) => {
@@ -524,7 +560,7 @@
         window.deleteProduct = async (id) => { if(confirm("¿Eliminar herramienta?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id)); };
         window.deleteExpense = async (id) => { if(confirm("¿Eliminar registro?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id)); };
         window.editExpense = (e) => { document.getElementById('e-id').value = e.id; document.getElementById('e-concept').value = e.concept; document.getElementById('e-category').value = e.category; document.getElementById('e-amount').value = e.amount; window.openModal('modal-expense'); };
-
+        
         window.suggestCustomers = (term) => {
             const sug = document.getElementById('customer-suggestions'); const fields = document.getElementById('new-customer-fields');
             selectedCustomerId = null; fields.classList.add('hidden');
@@ -541,7 +577,7 @@
         window.viewClientHistory = (id, name) => {
             const cs = historyRaw.filter(h => h.customerId === id);
             document.getElementById('client-history-name').innerText = `Historial: ${name}`;
-            document.getElementById('client-history-content').innerHTML = cs.length ? cs.map(h => `<div class="mb-4 p-4 bg-black/5 rounded border border-gray-200 dark:border-gray-800"><div class="flex justify-between text-xs mb-1"><span class="opacity-60">${h.date?.toDate ? h.date.toDate().toLocaleDateString() : 'Reciente'}</span><span class="font-bold uppercase text-amber-500">${h.saleMode}</span></div><p class="text-sm text-adaptive">${h.detail}</p><p class="text-right font-bold mt-2 text-amber-600">${fmt(h.amount)}</p></div>`).join('') : '<p class="text-center italic opacity-40 text-adaptive p-10">Sin compras registradas</p>';
+            document.getElementById('client-history-content').innerHTML = cs.length ? cs.map(h => `<div class="mb-4 p-4 bg-black/5 rounded border border-gray-200 dark:border-gray-800 shadow-sm"><div class="flex justify-between text-xs mb-1"><span class="opacity-60">${h.date?.toDate ? h.date.toDate().toLocaleDateString() : 'Reciente'}</span><span class="font-bold uppercase text-amber-500">${h.saleMode}</span></div><p class="text-sm text-adaptive">${h.detail}</p><p class="text-right font-bold mt-2 text-amber-600">${fmt(h.amount)}</p></div>`).join('') : '<p class="text-center italic opacity-40 text-adaptive p-10">Sin compras registradas</p>';
             window.openModal('modal-client-history');
         };
 
@@ -571,6 +607,9 @@
             r.readAsDataURL(f); 
         };
 
+        window.updateSupplierSelect = () => { const s = document.getElementById('p-supplier'); if (s) s.innerHTML = '<option value="">Seleccionar</option>' + suppliers.map(x => `<option value="${x.id}">${x.name}</option>`).join(''); };
+        window.updateDatalists = () => { const nEl = document.getElementById('list-product-names'); const bEl = document.getElementById('list-brands'); if (nEl) nEl.innerHTML = [...new Set(products.map(p => p.name))].map(n => `<option value="${n}">`).join(''); if (bEl) bEl.innerHTML = [...new Set(products.map(p => p.brand))].map(b => `<option value="${b}">`).join(''); };
+
         window.exportStock = (onlyFiltered) => {
             const sVal = document.getElementById('stock-search').value.toLowerCase();
             let d = onlyFiltered ? products.filter(p => (p.name && p.name.toLowerCase().includes(sVal)) || (p.brand && p.brand.toLowerCase().includes(sVal)) || (p.model && p.model.toLowerCase().includes(sVal)) || (suppliers.find(s => s.id === p.supplierId)?.name.toLowerCase().includes(sVal))) : products;
@@ -587,6 +626,22 @@
 
         window.handleInvoiceDownload = () => { if(currentInvoiceData) window.generateInvoice(currentInvoiceData.items, currentInvoiceData.total, currentInvoiceData.customer, true); };
         window.handleInvoiceShare = async () => { if(!currentInvoiceData) return; const pdfBlob = window.generateInvoice(currentInvoiceData.items, currentInvoiceData.total, currentInvoiceData.customer, false); if (navigator.share) { const file = new File([pdfBlob], `Factura_${currentInvoiceData.customer.replace(/\s+/g, '_')}.pdf`, { type: 'application/pdf' }); try { await navigator.share({ files: [file], title: 'Comprobante HL' }); } catch (err) {} } else { window.showToast("Compartir no disponible"); } };
+
+        window.generateInvoice = (items, total, customer, download = true) => {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            doc.setFillColor(30, 30, 30); doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(245, 158, 11); doc.setFontSize(22); doc.text("HERRAMIENTAS LIBRES", 15, 25);
+            doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.text("Comprobante de Venta", 15, 32);
+            doc.text(`Cliente: ${customer}`, 150, 25); doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 150, 32);
+            doc.autoTable({ startY: 50, head: [['Producto', 'Marca', 'Modelo', 'Cant.', 'Unitario', 'Subtotal']], body: items.map(i => [i.name, i.brand || '-', i.model || '-', i.qty, fmt(i.price), fmt(i.price * i.qty)]), theme: 'grid', headStyles: { fillColor: [245, 158, 11], textColor: [0, 0, 0] } });
+            const finalY = doc.lastAutoTable.finalY + 15;
+            doc.setTextColor(0, 0, 0); doc.setFontSize(14); doc.text(`TOTAL: ${fmt(total)}`, 140, finalY);
+            doc.setFontSize(8); doc.setTextColor(100, 100, 100);
+            doc.text("¡Gracias por su compra en Herramientas Libres!", 15, finalY + 15);
+            doc.text("Se aceptan devoluciones por mal funcionamiento solo dentro de las 72 hs de hecha la compra.", 15, finalY + 20);
+            doc.text("El producto debe estar en su caja original, con todos los accesorios.", 15, finalY + 25);
+            if (download) doc.save(`Factura_${customer}.pdf`); else return doc.output('blob');
+        };
 
         // --- LÓGICA DE DATOS ---
         const startApp = async () => {
@@ -626,47 +681,7 @@
         async function handleProductSubmit(e) { e.preventDefault(); const id = document.getElementById('p-id').value; const data = { name: document.getElementById('p-name').value, brand: document.getElementById('p-brand').value, model: document.getElementById('p-model').value, code: document.getElementById('p-code').value, supplierId: document.getElementById('p-supplier').value, stock: parseInt(document.getElementById('p-stock').value), cost: parseFloat(document.getElementById('p-cost').value), price: parseFloat(document.getElementById('p-price').value), image: document.getElementById('p-image-data').value, updatedAt: serverTimestamp() }; if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), data); else { data.createdAt = serverTimestamp(); await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), data); } closeModal('modal-product'); window.showToast("Herramienta guardada"); }
         async function handleSupplierSubmit(e) { e.preventDefault(); const id = document.getElementById('s-id').value; const data = { name: document.getElementById('s-name').value, whatsapp: document.getElementById('s-whatsapp').value, phone: document.getElementById('s-phone').value, email: document.getElementById('s-email').value, address: document.getElementById('s-address').value, city: document.getElementById('s-city').value, country: document.getElementById('s-country').value, updatedAt: serverTimestamp() }; if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id), data); else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), { ...data, createdAt: serverTimestamp() }); closeModal('modal-supplier'); window.showToast("Proveedor guardado"); }
         async function handleExpenseSubmit(e) { e.preventDefault(); const id = document.getElementById('e-id').value; const data = { concept: document.getElementById('e-concept').value, category: document.getElementById('e-category').value, amount: parseFloat(document.getElementById('e-amount').value), date: serverTimestamp() }; if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id), data); else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), data); closeModal('modal-expense'); window.showToast("Egreso registrado"); }
-
-        window.renderCart = () => { const c = document.getElementById('cart-items'); if(!c) return; if(cart.length === 0) c.innerHTML = '<div class="opacity-40 text-center py-8 italic text-xs uppercase tracking-widest text-adaptive">Carrito vacío</div>'; else c.innerHTML = cart.map(i => `<div class="flex justify-between items-center bg-black/5 p-3 rounded-lg border border-gray-200 dark:border-gray-800"><div><p class="text-xs font-bold uppercase text-adaptive">${i.name}</p><p class="text-[10px] opacity-60 text-adaptive">${i.brand || 'S/M'} | ${fmt(i.price)} x ${i.qty}</p></div><div class="flex items-center gap-3"><span class="font-bold accent-color text-sm">${fmt(i.price * i.qty)}</span><button onclick="window.removeFromCart('${i.id}')" class="text-red-400 hover:scale-110 transition-transform"><i data-lucide="x-circle" class="w-4 h-4"></i></button></div></div>`).join(''); document.getElementById('cart-total').innerText = fmt(cart.reduce((s, i) => s + (i.price * i.qty), 0)); document.getElementById('cart-count').innerText = cart.length; lucide.createIcons(); };
-        window.updateSupplierSelect = () => { const s = document.getElementById('p-supplier'); if (s) s.innerHTML = '<option value="">Seleccionar</option>' + suppliers.map(x => `<option value="${x.id}">${x.name}</option>`).join(''); };
-        window.updateDatalists = () => { const nEl = document.getElementById('list-product-names'); const bEl = document.getElementById('list-brands'); if (nEl) nEl.innerHTML = [...new Set(products.map(p => p.name))].map(n => `<option value="${n}">`).join(''); if (bEl) bEl.innerHTML = [...new Set(products.map(p => p.brand))].map(b => `<option value="${b}">`).join(''); };
-        
-        window.filterHistory = () => { 
-            const hl = document.getElementById('history-list'); if(!hl) return; 
-            const fF = document.getElementById('hist-from'); const fT = document.getElementById('hist-to');
-            const fS = document.getElementById('hist-search'); const fTy = document.getElementById('hist-type');
-            const from = fF?.value ? new Date(fF.value + "T00:00:00").getTime() : 0;
-            const to = fT?.value ? new Date(fT.value + "T23:59:59").getTime() : Infinity;
-            const term = fS?.value.toLowerCase() || ""; const type = fTy?.value;
-
-            let f = historyRaw.filter(h => {
-                const ts = h.date?.toDate ? h.date.toDate().getTime() : 0;
-                const matchesText = h.detail.toLowerCase().includes(term) || (h.customerName && h.customerName.toLowerCase().includes(term));
-                const matchesType = !type || h.saleMode === type;
-                // Búsqueda por proveedor en el historial
-                const hasSupplier = h.items?.some(item => suppliers.find(s => s.id === item.supplierId)?.name.toLowerCase().includes(term));
-                return ts >= from && ts <= to && (matchesText || hasSupplier) && matchesType;
-            }).sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)); 
-            
-            if(!fF?.value && !fT?.value && !term && !type) f = f.slice(0,10); 
-            hl.innerHTML = f.map(h => `<tr class="border-b border-gray-200 dark:border-gray-800 text-xs text-adaptive"><td class="p-4 opacity-70">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-300 dark:border-gray-700">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold">${h.customerName || 'Mostrador'}</td><td class="p-4 opacity-70 truncate max-w-[200px]">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join(''); 
-        };
-
-        window.generateInvoice = (items, total, customer, download = true) => {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF();
-            doc.setFillColor(30, 30, 30); doc.rect(0, 0, 210, 40, 'F');
-            doc.setTextColor(245, 158, 11); doc.setFontSize(22); doc.text("HERRAMIENTAS LIBRES", 15, 25);
-            doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.text("Comprobante de Venta", 15, 32);
-            doc.text(`Cliente: ${customer}`, 150, 25); doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 150, 32);
-            doc.autoTable({ startY: 50, head: [['Producto', 'Marca', 'Modelo', 'Cant.', 'Unitario', 'Subtotal']], body: items.map(i => [i.name, i.brand || '-', i.model || '-', i.qty, fmt(i.price), fmt(i.price * i.qty)]), theme: 'grid', headStyles: { fillColor: [245, 158, 11], textColor: [0, 0, 0] } });
-            const finalY = doc.lastAutoTable.finalY + 15;
-            doc.setTextColor(0, 0, 0); doc.setFontSize(14); doc.text(`TOTAL: ${fmt(total)}`, 140, finalY);
-            doc.setFontSize(8); doc.setTextColor(100, 100, 100);
-            doc.text("¡Gracias por su compra en Herramientas Libres!", 15, finalY + 15);
-            doc.text("Se aceptan devoluciones por mal funcionamiento solo dentro de las 72 hs de hecha la compra.", 15, finalY + 20);
-            doc.text("El producto debe estar en su caja original, con todos los accesorios.", 15, finalY + 25);
-            if (download) doc.save(`Factura_${customer}.pdf`); else return doc.output('blob');
-        };
+        async function handleClientEditSubmit(e) { e.preventDefault(); const id = document.getElementById('edit-c-id').value; if(!id) return; const data = { name: document.getElementById('edit-c-name').value, surname: document.getElementById('edit-c-surname').value, phone: document.getElementById('edit-c-phone').value, email: document.getElementById('edit-c-email').value, updatedAt: serverTimestamp() }; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'customers', id), data); closeModal('modal-client'); window.showToast("Cliente actualizado"); }
 
         window.addEventListener('load', startApp);
     </script>
