@@ -119,9 +119,15 @@
         
         <!-- SECCIÓN: STOCK -->
         <section id="sec-stock" class="tab-content hidden">
-            <div class="flex justify-between items-center mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <h2 class="text-2xl font-bold">Inventario</h2>
-                <button onclick="openModal('modal-product')" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2"><i data-lucide="plus" class="w-4 h-4"></i> Nuevo</button>
+                <div class="flex w-full md:w-auto gap-4">
+                    <div class="relative flex-1 md:w-64">
+                        <input type="text" id="stock-search" placeholder="Buscar en inventario..." class="w-full p-2 rounded text-sm outline-none pl-8" oninput="window.renderStock()">
+                        <i data-lucide="search" class="absolute left-2 top-2.5 w-4 h-4 text-gray-500"></i>
+                    </div>
+                    <button onclick="openModal('modal-product')" class="btn-primary px-4 py-2 rounded-lg flex items-center gap-2 shrink-0"><i data-lucide="plus" class="w-4 h-4"></i> Nuevo</button>
+                </div>
             </div>
             <div class="bg-card rounded-xl border border-gray-800 overflow-x-auto">
                 <table class="w-full text-left">
@@ -163,8 +169,8 @@
                         <div class="space-y-3">
                             <label class="block text-[10px] text-gray-500 uppercase font-bold">Tipo de Venta</label>
                             <div class="grid grid-cols-2 gap-2">
-                                <button onclick="setSaleType('presencial')" id="btn-presencial" class="py-2 rounded border border-gray-700 text-xs bg-gray-800 text-white transition-all">Presencial</button>
-                                <button onclick="setSaleType('online')" id="btn-online" class="py-2 rounded border border-gray-700 text-xs bg-gray-800 text-white transition-all">Online</button>
+                                <button onclick="setSaleType('presencial')" id="btn-presencial" class="py-2 rounded border border-gray-700 text-xs transition-all">Presencial</button>
+                                <button onclick="setSaleType('online')" id="btn-online" class="py-2 rounded border border-gray-700 text-xs transition-all">Online</button>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 gap-3">
@@ -173,7 +179,6 @@
                                 <input type="text" id="sale-customer-search" placeholder="Escribe nombre para buscar..." class="w-full p-2 text-sm rounded outline-none" oninput="suggestCustomers(this.value)">
                                 <div id="customer-suggestions" class="bg-gray-800 rounded mt-1 hidden max-h-40 overflow-y-auto border border-gray-700"></div>
                             </div>
-                            <!-- Campos para nuevo cliente extendidos -->
                             <div id="new-customer-fields" class="space-y-2 hidden border-l-2 border-amber-500 pl-3 pt-2">
                                 <p class="text-[10px] text-amber-500 font-bold uppercase italic">Registrar Nuevo Cliente:</p>
                                 <div class="grid grid-cols-2 gap-2">
@@ -200,7 +205,7 @@
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold">Base de Clientes</h2>
                 <div class="relative w-64">
-                    <input type="text" id="filter-clients" placeholder="Buscar cliente..." class="w-full p-2 rounded text-sm outline-none pl-8" oninput="renderCustomers()">
+                    <input type="text" id="filter-clients" placeholder="Buscar cliente..." class="w-full p-2 rounded text-sm outline-none pl-8" oninput="window.renderCustomers()">
                     <i data-lucide="search" class="absolute left-2 top-2.5 w-4 h-4 text-gray-500"></i>
                 </div>
             </div>
@@ -213,8 +218,8 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-card p-4 rounded-xl border border-gray-800">
                 <input type="date" id="hist-from" class="w-full p-2 rounded text-sm">
                 <input type="date" id="hist-to" class="w-full p-2 rounded text-sm">
-                <input type="text" id="hist-search" placeholder="Buscar producto o cliente..." class="w-full p-2 rounded text-sm" oninput="filterHistory()">
-                <select id="hist-type" class="w-full p-2 rounded text-sm" onchange="filterHistory()">
+                <input type="text" id="hist-search" placeholder="Buscar producto o cliente..." class="w-full p-2 rounded text-sm" oninput="window.filterHistory()">
+                <select id="hist-type" class="w-full p-2 rounded text-sm" onchange="window.filterHistory()">
                     <option value="">Todos los tipos</option>
                     <option value="presencial">Presencial</option>
                     <option value="online">Online</option>
@@ -232,17 +237,23 @@
 
         <!-- SECCIÓN: CONTABILIDAD -->
         <section id="sec-contabilidad" class="tab-content hidden">
+            <!-- Filtro Mensual -->
+            <div class="flex items-center gap-4 mb-6 bg-card p-4 rounded-xl border border-gray-800">
+                <label class="text-xs text-gray-500 uppercase font-bold">Ver mes:</label>
+                <input type="month" id="accounting-month" class="p-2 rounded outline-none text-sm" onchange="window.calculateStats(); window.renderExpenses();">
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div class="bg-card p-6 rounded-xl border-l-4 border-green-500">
-                    <p class="text-gray-400 text-xs uppercase font-bold">Ventas Totales</p>
+                    <p class="text-gray-400 text-xs uppercase font-bold">Ventas del Mes</p>
                     <h3 id="stat-sales" class="text-3xl font-bold text-white">$ 0,00</h3>
                 </div>
                 <div class="bg-card p-6 rounded-xl border-l-4 border-red-500">
-                    <p class="text-gray-400 text-xs uppercase font-bold">Gastos / Inversiones</p>
+                    <p class="text-gray-400 text-xs uppercase font-bold">Egresos del Mes</p>
                     <h3 id="stat-expenses" class="text-3xl font-bold text-white">$ 0,00</h3>
                 </div>
                 <div class="bg-card p-6 rounded-xl border-l-4 border-amber-500">
-                    <p class="text-gray-400 text-xs uppercase font-bold">Balance Neto</p>
+                    <p class="text-gray-400 text-xs uppercase font-bold">Balance Mensual</p>
                     <h3 id="stat-balance" class="text-3xl font-bold text-white">$ 0,00</h3>
                 </div>
             </div>
@@ -267,6 +278,7 @@
     <datalist id="list-product-names"></datalist>
     <datalist id="list-brands"></datalist>
 
+    <!-- MODAL PRODUCTO -->
     <div id="modal-product" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
         <div class="bg-card w-full max-w-2xl rounded-2xl border border-gray-700 overflow-hidden max-h-[90vh] modal-scroll">
             <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-black/20">
@@ -295,6 +307,7 @@
         </div>
     </div>
 
+    <!-- MODAL PROVEEDOR -->
     <div id="modal-supplier" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
         <div class="bg-card w-full max-w-lg rounded-2xl border border-gray-700 overflow-hidden">
             <div class="p-6 border-b border-gray-800 flex justify-between items-center"><h3 class="text-xl font-bold">Proveedor</h3><button onclick="closeModal('modal-supplier')"><i data-lucide="x"></i></button></div>
@@ -316,6 +329,24 @@
         </div>
     </div>
 
+    <!-- MODAL CLIENTE (EDICIÓN) -->
+    <div id="modal-client" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
+        <div class="bg-card w-full max-w-lg rounded-2xl border border-gray-700 overflow-hidden">
+            <div class="p-6 border-b border-gray-800 flex justify-between items-center"><h3 class="text-xl font-bold">Editar Cliente</h3><button onclick="closeModal('modal-client')"><i data-lucide="x"></i></button></div>
+            <form id="form-client" class="p-6 space-y-4">
+                <input type="hidden" id="edit-c-id">
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="text-xs text-gray-500">Nombre</label><input type="text" id="edit-c-name" required class="w-full p-2 rounded outline-none"></div>
+                    <div><label class="text-xs text-gray-500">Apellido</label><input type="text" id="edit-c-surname" required class="w-full p-2 rounded outline-none"></div>
+                </div>
+                <div><label class="text-xs text-gray-500">WhatsApp/Tel</label><input type="text" id="edit-c-phone" class="w-full p-2 rounded outline-none"></div>
+                <div><label class="text-xs text-gray-500">Email</label><input type="email" id="edit-c-email" class="w-full p-2 rounded outline-none"></div>
+                <div class="flex gap-2 pt-4"><button type="submit" class="btn-primary flex-1 py-3 rounded-lg">Guardar Cambios</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL EGRESO -->
     <div id="modal-expense" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
         <div class="bg-card w-full max-w-md rounded-2xl border border-gray-700 overflow-hidden">
             <div class="p-6 border-b border-gray-800 flex justify-between items-center"><h3>Nuevo Egreso</h3><button onclick="closeModal('modal-expense')"><i data-lucide="x"></i></button></div>
@@ -336,15 +367,6 @@
             </form>
         </div>
     </div>
-
-    <div id="modal-client-history" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
-        <div class="bg-card w-full max-w-2xl rounded-2xl border border-gray-700 overflow-hidden">
-            <div class="p-6 border-b border-gray-800 flex justify-between items-center"><h3 id="client-history-name" class="font-bold">Historial</h3><button onclick="closeModal('modal-client-history')"><i data-lucide="x"></i></button></div>
-            <div class="p-6 modal-scroll" id="client-history-content"></div>
-        </div>
-    </div>
-
-    <div id="toast" class="fixed bottom-8 right-8 bg-accent text-black px-6 py-3 rounded-full shadow-2xl font-bold opacity-0 transition-all z-[200]"></div>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
@@ -372,42 +394,52 @@
             auth = getAuth(app);
             db = getFirestore(app);
 
+            const now = new Date();
+            const monthVal = now.toISOString().slice(0, 7);
+            const acMonth = document.getElementById('accounting-month');
+            if(acMonth) acMonth.value = monthVal;
+
             onAuthStateChanged(auth, (user) => {
+                const statusEl = document.getElementById('auth-status');
+                const overlay = document.getElementById('login-overlay');
                 if (user) {
-                    document.getElementById('login-overlay').classList.add('hidden');
-                    document.getElementById('auth-status').innerText = 'En Línea';
+                    if(overlay) overlay.classList.add('hidden');
+                    if(statusEl) statusEl.innerText = 'En Línea';
                     initListeners();
                     switchTab('stock');
                 } else {
-                    document.getElementById('login-overlay').classList.remove('hidden');
+                    if(overlay) overlay.classList.remove('hidden');
                 }
             });
 
-            document.getElementById('login-form').onsubmit = async (e) => {
-                e.preventDefault();
-                try {
-                    await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
-                } catch (err) {
-                    const errEl = document.getElementById('login-error');
-                    errEl.innerText = "Error: Credenciales inválidas.";
-                    errEl.classList.remove('hidden');
-                }
-            };
+            const loginForm = document.getElementById('login-form');
+            if (loginForm) {
+                loginForm.onsubmit = async (e) => {
+                    e.preventDefault();
+                    try {
+                        await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
+                    } catch (err) {
+                        const errEl = document.getElementById('login-error');
+                        if(errEl) {
+                            errEl.innerText = "Error: Credenciales inválidas.";
+                            errEl.classList.remove('hidden');
+                        }
+                    }
+                };
+            }
 
-            // VINCULAR BUSCADOR DE HERRAMIENTAS EN VENTAS
+            // --- Búsqueda en Ventas ---
             const sInp = document.getElementById('search-product');
             if (sInp) {
                 sInp.addEventListener('input', () => {
                     const t = sInp.value.toLowerCase();
                     const r = document.getElementById('search-results');
                     if(!t) { r.innerHTML = ''; return; }
-                    
                     const f = products.filter(p => 
                         p.name.toLowerCase().includes(t) || 
                         (p.brand && p.brand.toLowerCase().includes(t)) || 
                         (p.code && p.code.toLowerCase().includes(t))
                     );
-                    
                     r.innerHTML = f.slice(0,5).map(p => `
                         <div onclick='addToCart(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="flex items-center justify-between p-3 bg-white/5 hover:bg-amber-500/10 rounded-lg cursor-pointer transition-all border border-transparent hover:border-amber-500/20">
                             <div class="flex items-center gap-3">
@@ -419,9 +451,13 @@
                 });
             }
 
-            document.getElementById('form-product').onsubmit = handleProductSubmit;
-            document.getElementById('form-supplier').onsubmit = handleSupplierSubmit;
-            document.getElementById('form-expense').onsubmit = handleExpenseSubmit;
+            // --- Form Handlers ---
+            const fProd = document.getElementById('form-product'); if(fProd) fProd.onsubmit = handleProductSubmit;
+            const fSupp = document.getElementById('form-supplier'); if(fSupp) fSupp.onsubmit = handleSupplierSubmit;
+            const fExp = document.getElementById('form-expense'); if(fExp) fExp.onsubmit = handleExpenseSubmit;
+            const fClie = document.getElementById('form-client'); if(fClie) fClie.onsubmit = handleClientEditSubmit;
+
+            window.setSaleType('presencial');
             lucide.createIcons();
         };
 
@@ -433,32 +469,163 @@
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), sn => { expenses = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderExpenses(); window.calculateStats(); });
         }
 
-        // --- MANEJO DE CLIENTES EN VENTAS ---
+        // --- FUNCIONES GLOBALES REQUERIDAS ---
+        window.renderStock = () => {
+            const sl = document.getElementById('stock-list'); if(!sl) return;
+            const search = document.getElementById('stock-search').value.toLowerCase();
+            let filtered = search ? 
+                products.filter(p => p.name.toLowerCase().includes(search) || (p.brand && p.brand.toLowerCase().includes(search)) || (p.code && p.code.toLowerCase().includes(search))) :
+                [...products].sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 20);
+
+            sl.innerHTML = filtered.map(p => `
+                <tr class="border-b border-gray-800 hover:bg-white/5 transition-colors">
+                    <td class="p-4"><img src="${p.image || ''}" class="w-10 h-10 object-cover rounded bg-gray-800" onerror="this.src='https://via.placeholder.com/40'"></td>
+                    <td class="p-4 font-medium text-sm text-white">${p.name}</td>
+                    <td class="p-4 text-gray-400 text-xs uppercase">${p.brand || 'S/M'}</td>
+                    <td class="p-4 font-bold text-xs ${p.stock < 5 ? 'text-red-500' : 'text-green-500'}">${p.stock} UN</td>
+                    <td class="p-4 font-bold text-sm accent-color">${fmt(p.price)}</td>
+                    <td class="p-4 flex gap-2">
+                        <button onclick='editProduct(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-amber-500 hover:scale-110 transition-transform"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                        <button onclick="deleteProduct('${p.id}')" class="text-red-400 hover:scale-110 transition-transform"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>`).join('');
+            lucide.createIcons();
+        };
+
+        window.renderCustomers = () => {
+            const el = document.getElementById('filter-clients'); if (!el) return;
+            const term = el.value.toLowerCase();
+            let filtered = customers.filter(c => (c.name && c.name.toLowerCase().includes(term)) || (c.surname && c.surname.toLowerCase().includes(term)));
+            if (!term) filtered = filtered.slice(0, 10);
+
+            const cl = document.getElementById('customer-list');
+            if (cl) cl.innerHTML = filtered.map(c => `
+                <div class="bg-card p-6 rounded-xl border border-gray-800 relative group">
+                    <div class="absolute top-4 right-4 flex gap-2">
+                        <button onclick='editCustomer(${JSON.stringify(c).replace(/'/g, "&apos;")})' class="text-gray-400 hover:text-amber-500"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                        <button onclick="viewClientHistory('${c.id}', '${c.name} ${c.surname || ''}')" class="text-amber-500"><i data-lucide="history" class="w-5 h-5"></i></button>
+                    </div>
+                    <h4 class="text-lg font-bold mb-1">${c.name} ${c.surname || ''}</h4>
+                    <div class="text-xs text-gray-400 space-y-1">
+                        <p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${c.phone || 'S/T'}</p>
+                        <p><i data-lucide="mail" class="inline w-3 h-3 mr-1"></i> ${c.email || 'S/E'}</p>
+                    </div>
+                </div>`).join('');
+            lucide.createIcons();
+        };
+
+        window.editCustomer = (c) => {
+            const id = document.getElementById('edit-c-id'); if(id) id.value = c.id;
+            const name = document.getElementById('edit-c-name'); if(name) name.value = c.name || '';
+            const sur = document.getElementById('edit-c-surname'); if(sur) sur.value = c.surname || '';
+            const pho = document.getElementById('edit-c-phone'); if(pho) pho.value = c.phone || '';
+            const email = document.getElementById('edit-c-email'); if(email) email.value = c.email || '';
+            openModal('modal-client');
+        };
+
+        async function handleClientEditSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-c-id').value;
+            const data = {
+                name: document.getElementById('edit-c-name').value,
+                surname: document.getElementById('edit-c-surname').value,
+                phone: document.getElementById('edit-c-phone').value,
+                email: document.getElementById('edit-c-email').value,
+                updatedAt: serverTimestamp()
+            };
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'customers', id), data);
+            closeModal('modal-client');
+            showToast("Cliente actualizado");
+        }
+
+        window.calculateStats = () => {
+            const selectedMonth = document.getElementById('accounting-month').value;
+            const fSales = historyRaw.filter(h => h.date && h.date.toDate().toISOString().slice(0, 7) === selectedMonth);
+            const fExpenses = expenses.filter(e => e.date && e.date.toDate().toISOString().slice(0, 7) === selectedMonth);
+            
+            const totalS = fSales.reduce((s, h) => s + (h.amount || 0), 0);
+            const totalE = fExpenses.reduce((s, e) => s + (e.amount || 0), 0);
+
+            document.getElementById('stat-sales').innerText = fmt(totalS);
+            document.getElementById('stat-expenses').innerText = fmt(totalE);
+            document.getElementById('stat-balance').innerText = fmt(totalS - totalE);
+        };
+
+        window.renderExpenses = () => {
+            const el = document.getElementById('expense-list'); if(!el) return;
+            const selectedMonth = document.getElementById('accounting-month').value;
+            const filtered = expenses.filter(e => e.date && e.date.toDate().toISOString().slice(0, 7) === selectedMonth);
+
+            el.innerHTML = filtered.map(e => `
+                <tr class="border-b border-gray-800 hover:bg-white/5 transition-colors">
+                    <td class="p-4 text-xs text-gray-500">${e.date?.toDate ? e.date.toDate().toLocaleDateString() : '-'}</td>
+                    <td class="p-4 font-medium">${e.concept}</td>
+                    <td class="p-4"><span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-gray-400 uppercase">${e.category}</span></td>
+                    <td class="p-4 font-bold text-red-400">${fmt(e.amount)}</td>
+                    <td class="p-4 flex gap-2">
+                        <button onclick='editExpense(${JSON.stringify(e).replace(/'/g, "&apos;")})' class="text-gray-500 hover:text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                        <button onclick="deleteExpense('${e.id}')" class="text-gray-500 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>`).join('');
+            lucide.createIcons();
+        };
+
+        window.filterHistory = () => {
+            const fFrom = document.getElementById('hist-from');
+            const fTo = document.getElementById('hist-to');
+            const fSearch = document.getElementById('hist-search');
+            const fType = document.getElementById('hist-type');
+
+            const from = fFrom?.value ? new Date(fFrom.value + "T00:00:00").getTime() : 0;
+            const to = fTo?.value ? new Date(fTo.value + "T23:59:59").getTime() : Infinity;
+            const term = fSearch?.value.toLowerCase() || "";
+            const type = fType?.value;
+
+            let filtered = historyRaw.filter(h => { 
+                const ts = h.date?.toDate ? h.date.toDate().getTime() : 0; 
+                return ts >= from && ts <= to && (h.detail.toLowerCase().includes(term) || (h.customerName && h.customerName.toLowerCase().includes(term))) && (!type || h.saleMode === type); 
+            });
+
+            if (!fFrom?.value && !fTo?.value && !term && !type) {
+                filtered = filtered.sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)).slice(0, 10);
+            } else {
+                filtered = filtered.sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0));
+            }
+
+            const hl = document.getElementById('history-list');
+            if(hl) hl.innerHTML = filtered.map(h => `<tr class="border-b border-gray-800 text-xs"><td class="p-4 text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-700">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-gray-300">${h.customerName || 'Mostrador'}</td><td class="p-4 text-gray-400 max-w-xs truncate">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join('');
+        };
+
+        // --- VENTAS ---
+        window.setSaleType = (t) => { 
+            saleType = t; 
+            const bP = document.getElementById('btn-presencial'); 
+            const bO = document.getElementById('btn-online'); 
+            if(bP) {
+                bP.classList.toggle('border-amber-500', t === 'presencial'); 
+                bP.classList.toggle('bg-amber-500/10', t === 'presencial');
+                bP.classList.toggle('text-amber-500', t === 'presencial');
+                bP.classList.toggle('text-white', t !== 'presencial');
+            }
+            if(bO) {
+                bO.classList.toggle('border-amber-500', t === 'online'); 
+                bO.classList.toggle('bg-amber-500/10', t === 'online');
+                bO.classList.toggle('text-amber-500', t === 'online');
+                bO.classList.toggle('text-white', t !== 'online');
+            }
+        };
+
         window.suggestCustomers = (term) => {
             const sug = document.getElementById('customer-suggestions');
             const fields = document.getElementById('new-customer-fields');
             if(!term) { sug.classList.add('hidden'); fields.classList.add('hidden'); return; }
-            
-            const matches = customers.filter(c => 
-                (c.name && c.name.toLowerCase().includes(term.toLowerCase())) || 
-                (c.surname && c.surname.toLowerCase().includes(term.toLowerCase())) || 
-                (c.phone && c.phone.includes(term))
-            );
-
+            const matches = customers.filter(c => (c.name && c.name.toLowerCase().includes(term.toLowerCase())) || (c.surname && c.surname.toLowerCase().includes(term.toLowerCase())) || (c.phone && c.phone.includes(term)));
             if(matches.length > 0) {
-                sug.innerHTML = matches.map(c => `
-                    <div onclick="selectCustomer('${c.id}', '${c.name}', '${c.surname || ''}')" class="p-2 hover:bg-amber-500/20 cursor-pointer text-xs border-b border-gray-700 font-bold">
-                        ${c.name} ${c.surname || ''} (${c.phone || 'S/T'})
-                    </div>`).join('');
-                sug.classList.remove('hidden'); 
-                fields.classList.add('hidden');
-                selectedCustomerId = null; 
+                sug.innerHTML = matches.map(c => `<div onclick="selectCustomer('${c.id}', '${c.name}', '${c.surname || ''}')" class="p-2 hover:bg-amber-500/20 cursor-pointer text-xs border-b border-gray-700 font-bold">${c.name} ${c.surname || ''} (${c.phone || 'S/T'})</div>`).join('');
+                sug.classList.remove('hidden'); fields.classList.add('hidden'); selectedCustomerId = null; 
             } else {
-                sug.classList.add('hidden'); 
-                fields.classList.remove('hidden');
-                selectedCustomerId = null;
-                const nameInp = document.getElementById('c-name');
-                if(nameInp && !nameInp.value) nameInp.value = term;
+                sug.classList.add('hidden'); fields.classList.remove('hidden'); selectedCustomerId = null;
+                const nameInp = document.getElementById('c-name'); if(nameInp) nameInp.value = term;
             }
         };
 
@@ -469,64 +636,49 @@
             document.getElementById('new-customer-fields').classList.add('hidden');
         };
 
-        window.addToCart = (p) => {
-            const it = cart.find(i => i.id === p.id);
-            if(it) { if(it.qty < p.stock) it.qty++; else return showToast("Stock insuficiente"); }
-            else { if(p.stock > 0) cart.push({ ...p, qty: 1 }); else return showToast("Sin stock"); }
-            document.getElementById('search-product').value = '';
-            document.getElementById('search-results').innerHTML = '';
-            window.renderCart();
-        };
-
         window.processSale = async () => {
             if(!db || !auth.currentUser) return showToast("Sin conexión");
             if(cart.length === 0) return showToast("Carrito vacío");
-            
             const searchVal = document.getElementById('sale-customer-search').value.trim();
             if(!searchVal) return showToast("Identifique al cliente");
 
             try {
                 let customerId = selectedCustomerId;
                 let customerFullName = searchVal;
-
                 if(!customerId) {
-                    const firstName = document.getElementById('c-name').value.trim();
-                    const lastName = document.getElementById('c-surname').value.trim();
-                    const phone = document.getElementById('c-phone').value.trim();
-                    const email = document.getElementById('c-email').value.trim();
-
-                    if(!firstName || !lastName) return showToast("Ingresa Nombre y Apellido para registrar el cliente");
-
-                    const newC = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'customers'), {
-                        name: firstName, surname: lastName, phone, email, createdAt: serverTimestamp()
-                    });
-                    customerId = newC.id;
-                    customerFullName = `${firstName} ${lastName}`;
+                    const fn = document.getElementById('c-name').value.trim();
+                    const ln = document.getElementById('c-surname').value.trim();
+                    const ph = document.getElementById('c-phone').value.trim();
+                    const em = document.getElementById('c-email').value.trim();
+                    if(!fn || !ln) return showToast("Faltan datos del cliente");
+                    const newC = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'customers'), { name: fn, surname: ln, phone: ph, email: em, createdAt: serverTimestamp() });
+                    customerId = newC.id; customerFullName = `${fn} ${ln}`;
                 }
 
-                const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-                const detail = cart.map(i => `${i.qty}x ${i.name} [${i.brand}]`).join(', ');
-
-                for(const it of cart) { 
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', it.id), { stock: increment(-it.qty) }); 
-                }
-
+                for(const it of cart) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', it.id), { stock: increment(-it.qty) }); }
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'history'), {
-                    type: 'venta', saleMode: saleType, customerId, customerName: customerFullName, detail, amount: total, items: cart, date: serverTimestamp()
+                    type: 'venta', saleMode: saleType, customerId, customerName: customerFullName, detail: cart.map(i => `${i.qty}x ${i.name} [${i.brand}]`).join(', '), amount: cart.reduce((s, i) => s + (i.price * i.qty), 0), items: cart, date: serverTimestamp()
                 });
 
-                generateInvoice(cart, total, customerFullName);
-                showToast("¡Venta Exitosa!"); 
-                cart = []; window.renderCart();
-                document.getElementById('sale-customer-search').value = '';
-                document.getElementById('new-customer-fields').classList.add('hidden');
-                document.getElementById('c-name').value = ''; document.getElementById('c-surname').value = '';
-                document.getElementById('c-phone').value = ''; document.getElementById('c-email').value = '';
+                generateInvoice(cart, cart.reduce((s, i) => s + (i.price * i.qty), 0), customerFullName);
+                showToast("¡Venta Exitosa!"); cart = []; window.renderCart();
+                document.getElementById('sale-customer-search').value = ''; document.getElementById('new-customer-fields').classList.add('hidden');
                 selectedCustomerId = null;
-            } catch(e) { showToast("Error al procesar la venta"); }
+            } catch(e) { showToast("Error al procesar"); }
         };
 
-        // --- MANEJO DE FORMULARIOS ---
+        function generateInvoice(items, total, customer) {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            doc.setFillColor(30, 30, 30); doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(245, 158, 11); doc.setFontSize(22); doc.text("HERRAMIENTAS LIBRES", 15, 25);
+            doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.text("Comprobante de Venta", 15, 32);
+            doc.text(`Cliente: ${customer}`, 150, 25); doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 150, 32);
+            doc.autoTable({ startY: 50, head: [['Producto', 'Marca', 'Cant.', 'Unitario', 'Subtotal']], body: items.map(i => [i.name, i.brand || 'S/M', i.qty, fmt(i.price), fmt(i.price * i.qty)]), theme: 'grid', headStyles: { fillColor: [245, 158, 11], textColor: [0, 0, 0] } });
+            doc.setTextColor(0, 0, 0); doc.setFontSize(14); doc.text(`TOTAL: ${fmt(total)}`, 140, doc.lastAutoTable.finalY + 15);
+            doc.save(`Venta_${customer.replace(/\s+/g, '_')}.pdf`);
+        }
+
+        // --- HANDLERS COMUNES ---
         async function handleProductSubmit(e) {
             e.preventDefault();
             const id = document.getElementById('p-id').value;
@@ -545,10 +697,8 @@
             e.preventDefault();
             const id = document.getElementById('s-id').value;
             const data = {
-                name: document.getElementById('s-name').value, whatsapp: document.getElementById('s-whatsapp').value,
-                phone: document.getElementById('s-phone').value, email: document.getElementById('s-email').value,
-                address: document.getElementById('s-address').value, city: document.getElementById('s-city').value,
-                country: document.getElementById('s-country').value, updatedAt: serverTimestamp()
+                name: document.getElementById('s-name').value, whatsapp: document.getElementById('s-whatsapp').value, phone: document.getElementById('s-phone').value, email: document.getElementById('s-email').value,
+                address: document.getElementById('s-address').value, city: document.getElementById('s-city').value, country: document.getElementById('s-country').value, updatedAt: serverTimestamp()
             };
             if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id), data);
             else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), { ...data, createdAt: serverTimestamp() });
@@ -564,26 +714,20 @@
             closeModal('modal-expense'); showToast("Egreso registrado");
         }
 
-        // --- NAVEGACIÓN Y EXTRAS ---
         window.switchTab = (id) => {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-            const target = document.getElementById(`sec-${id}`);
-            if (target) { target.classList.remove('hidden'); }
+            const target = document.getElementById(`sec-${id}`); if (target) target.classList.remove('hidden');
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('tab-active'));
-            const tabBtn = document.getElementById(`tab-${id}`); 
-            if(tabBtn) tabBtn.classList.add('tab-active');
+            const tabBtn = document.getElementById(`tab-${id}`); if(tabBtn) tabBtn.classList.add('tab-active');
             lucide.createIcons();
         };
 
         window.openModal = (id) => { 
             const el = document.getElementById(id);
             if (el) { 
-                const form = el.querySelector('form');
-                if(form) form.reset();
-                const hid = el.querySelector('input[type="hidden"]');
-                if(hid) hid.value = '';
-                const picC = document.getElementById('image-preview-container');
-                if (picC && id === 'modal-product') picC.innerHTML = '';
+                const form = el.querySelector('form'); if(form) form.reset();
+                const hid = el.querySelector('input[type="hidden"]'); if(hid) hid.value = '';
+                const picC = document.getElementById('image-preview-container'); if (picC && id === 'modal-product') picC.innerHTML = '';
                 el.classList.remove('hidden'); el.classList.add('flex'); lucide.createIcons(); 
             }
         };
@@ -607,20 +751,21 @@
             r.readAsDataURL(f);
         };
 
-        window.renderStock = () => {
-            const sl = document.getElementById('stock-list'); if(!sl) return;
-            sl.innerHTML = products.map(p => `
-                <tr class="border-b border-gray-800 hover:bg-white/5 transition-colors">
-                    <td class="p-4"><img src="${p.image || ''}" class="w-10 h-10 object-cover rounded bg-gray-800" onerror="this.src='https://via.placeholder.com/40'"></td>
-                    <td class="p-4 font-medium text-sm text-white">${p.name}</td>
-                    <td class="p-4 text-gray-400 text-xs uppercase">${p.brand || 'S/M'}</td>
-                    <td class="p-4 font-bold text-xs ${p.stock < 5 ? 'text-red-500' : 'text-green-500'}">${p.stock} UN</td>
-                    <td class="p-4 font-bold text-sm accent-color">${fmt(p.price)}</td>
-                    <td class="p-4 flex gap-2">
-                        <button onclick='editProduct(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-amber-500 hover:scale-110 transition-transform"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                        <button onclick="deleteProduct('${p.id}')" class="text-red-400 hover:scale-110 transition-transform"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </td>
-                </tr>`).join('');
+        window.addToCart = (p) => {
+            const it = cart.find(i => i.id === p.id);
+            if(it) { if(it.qty < p.stock) it.qty++; else return showToast("Stock insuficiente"); }
+            else { if(p.stock > 0) cart.push({ ...p, qty: 1 }); else return showToast("Sin stock"); }
+            document.getElementById('search-product').value = ''; document.getElementById('search-results').innerHTML = ''; window.renderCart();
+        };
+
+        window.removeFromCart = (id) => { cart = cart.filter(i => i.id !== id); window.renderCart(); };
+
+        window.renderCart = () => {
+            const c = document.getElementById('cart-items'); if(!c) return;
+            if(cart.length === 0) c.innerHTML = '<div class="text-gray-500 text-center py-8 italic text-xs uppercase tracking-widest">Carrito vacío</div>';
+            else c.innerHTML = cart.map(i => `<div class="flex justify-between items-center bg-black/30 p-3 rounded-lg border border-gray-800"><div><p class="text-xs font-bold uppercase text-white">${i.name}</p><p class="text-[10px] text-gray-500">${i.brand || 'S/M'} | ${fmt(i.price)} x ${i.qty}</p></div><div class="flex items-center gap-3"><span class="font-bold accent-color text-sm">${fmt(i.price * i.qty)}</span><button onclick="removeFromCart('${i.id}')" class="text-red-400"><i data-lucide="x-circle" class="w-4 h-4"></i></button></div></div>`).join('');
+            document.getElementById('cart-total').innerText = fmt(cart.reduce((s, i) => s + (i.price * i.qty), 0));
+            document.getElementById('cart-count').innerText = cart.length;
             lucide.createIcons();
         };
 
@@ -630,26 +775,8 @@
             document.getElementById('p-supplier').value = p.supplierId || ''; document.getElementById('p-stock').value = p.stock;
             document.getElementById('p-cost').value = p.cost; document.getElementById('p-price').value = p.price;
             document.getElementById('p-image-data').value = p.image || ''; 
-            const picContainer = document.getElementById('image-preview-container');
-            if (picContainer) picContainer.innerHTML = p.image ? `<img src="${p.image}" class="w-full h-full object-cover">` : '';
-            openModal('modal-product');
-        };
-
-        window.renderSuppliers = () => {
-            const spl = document.getElementById('supplier-list'); if(!spl) return;
-            spl.innerHTML = suppliers.map(s => `
-                <div class="bg-card p-6 rounded-xl border border-gray-800 relative group">
-                    <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick='editSupplier(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                        <button onclick="deleteSupplier('${s.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                    <h4 class="text-lg font-bold mb-2 text-white">${s.name}</h4>
-                    <div class="space-y-1 text-xs text-gray-400">
-                        <p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${s.whatsapp || '-'}</p>
-                        <p><i data-lucide="map-pin" class="inline w-3 h-3 mr-1"></i> ${s.city}</p>
-                    </div>
-                </div>`).join('');
-            lucide.createIcons();
+            const pc = document.getElementById('image-preview-container'); if(pc) pc.innerHTML = p.image ? `<img src="${p.image}" class="w-full h-full object-cover">` : '';
+            const el = document.getElementById('modal-product'); el.classList.remove('hidden'); el.classList.add('flex'); lucide.createIcons();
         };
 
         window.editSupplier = (s) => {
@@ -657,97 +784,27 @@
             document.getElementById('s-whatsapp').value = s.whatsapp; document.getElementById('s-phone').value = s.phone;
             document.getElementById('s-email').value = s.email; document.getElementById('s-address').value = s.address;
             document.getElementById('s-city').value = s.city; document.getElementById('s-country').value = s.country;
-            const el = document.getElementById('modal-supplier'); el.classList.remove('hidden'); el.classList.add('flex');
-        };
-
-        window.renderCustomers = () => {
-            const el = document.getElementById('filter-clients'); if (!el) return;
-            const term = el.value.toLowerCase();
-            const filtered = customers.filter(c => (c.name && c.name.toLowerCase().includes(term)) || (c.surname && c.surname.toLowerCase().includes(term)));
-            const cl = document.getElementById('customer-list');
-            if (cl) cl.innerHTML = filtered.map(c => `
-                <div class="bg-card p-6 rounded-xl border border-gray-800 relative group">
-                    <button onclick="viewClientHistory('${c.id}', '${c.name} ${c.surname || ''}')" class="absolute top-4 right-4 text-amber-500"><i data-lucide="history" class="w-5 h-5"></i></button>
-                    <h4 class="text-lg font-bold mb-1">${c.name} ${c.surname || ''}</h4>
-                    <div class="text-xs text-gray-400 space-y-1">
-                        <p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${c.phone || 'S/T'}</p>
-                        <p><i data-lucide="mail" class="inline w-3 h-3 mr-1"></i> ${c.email || 'S/E'}</p>
-                    </div>
-                </div>`).join('');
-            lucide.createIcons();
-        };
-
-        window.renderExpenses = () => {
-            const el = document.getElementById('expense-list'); if(!el) return;
-            el.innerHTML = expenses.map(e => `
-                <tr class="border-b border-gray-800 hover:bg-white/5 transition-colors">
-                    <td class="p-4 text-xs text-gray-500">${e.date?.toDate ? e.date.toDate().toLocaleDateString() : '-'}</td>
-                    <td class="p-4 font-medium">${e.concept}</td>
-                    <td class="p-4"><span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-gray-400 uppercase">${e.category}</span></td>
-                    <td class="p-4 font-bold text-red-400">${fmt(e.amount)}</td>
-                    <td class="p-4 flex gap-2">
-                        <button onclick='editExpense(${JSON.stringify(e).replace(/'/g, "&apos;")})' class="text-gray-500 hover:text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                        <button onclick="deleteExpense('${e.id}')" class="text-gray-500 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </td>
-                </tr>`).join('');
-            lucide.createIcons();
+            const el = document.getElementById('modal-supplier'); el.classList.remove('hidden'); el.classList.add('flex'); lucide.createIcons();
         };
 
         window.editExpense = (e) => {
             document.getElementById('e-id').value = e.id; document.getElementById('e-concept').value = e.concept;
             document.getElementById('e-category').value = e.category; document.getElementById('e-amount').value = e.amount;
-            const el = document.getElementById('modal-expense'); el.classList.remove('hidden'); el.classList.add('flex');
+            const el = document.getElementById('modal-expense'); el.classList.remove('hidden'); el.classList.add('flex'); lucide.createIcons();
         };
 
-        function generateInvoice(items, total, customer) {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF();
-            doc.setFillColor(30, 30, 30); doc.rect(0, 0, 210, 40, 'F');
-            doc.setTextColor(245, 158, 11); doc.setFontSize(22); doc.text("HERRAMIENTAS LIBRES", 15, 25);
-            doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.text("Comprobante de Venta", 15, 32);
-            doc.text(`Cliente: ${customer}`, 150, 25); doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 150, 32);
-            doc.autoTable({
-                startY: 50,
-                head: [['Producto', 'Marca', 'Cant.', 'Unitario', 'Subtotal']],
-                body: items.map(i => [i.name, i.brand || 'S/M', i.qty, fmt(i.price), fmt(i.price * i.qty)]),
-                theme: 'grid', headStyles: { fillColor: [245, 158, 11], textColor: [0, 0, 0] }
-            });
-            doc.setTextColor(0, 0, 0); doc.setFontSize(14); doc.text(`TOTAL: ${fmt(total)}`, 140, doc.lastAutoTable.finalY + 15);
-            doc.save(`Venta_${customer.replace(/\s+/g, '_')}.pdf`);
-        }
-
-        window.renderCart = () => {
-            const c = document.getElementById('cart-items'); if(!c) return;
-            if(cart.length === 0) c.innerHTML = '<div class="text-gray-500 text-center py-8 italic text-xs uppercase tracking-widest">Carrito vacío</div>';
-            else c.innerHTML = cart.map(i => `
-                <div class="flex justify-between items-center bg-black/30 p-3 rounded-lg border border-gray-800">
-                    <div><p class="text-xs font-bold uppercase text-white">${i.name}</p><p class="text-[10px] text-gray-500">${i.brand || 'S/M'} | ${fmt(i.price)} x ${i.qty}</p></div>
-                    <div class="flex items-center gap-3"><span class="font-bold accent-color text-sm">${fmt(i.price * i.qty)}</span><button onclick="removeFromCart('${i.id}')" class="text-red-400"><i data-lucide="x-circle" class="w-4 h-4"></i></button></div>
-                </div>`).join('');
-            const t = cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            document.getElementById('cart-total').innerText = fmt(t);
-            document.getElementById('cart-count').innerText = cart.length;
-            lucide.createIcons();
-        };
-
-        function showToast(m) { const t = document.getElementById('toast'); if(t){ t.innerText = m; t.classList.remove('opacity-0'); setTimeout(() => t.classList.add('opacity-0'), 3000); } }
-        window.calculateStats = () => {
-            const totalSales = historyRaw.reduce((s, h) => s + (h.amount || 0), 0);
-            const totalExpenses = expenses.reduce((s, e) => s + (e.amount || 0), 0);
-            document.getElementById('stat-sales').innerText = fmt(totalSales);
-            document.getElementById('stat-expenses').innerText = fmt(totalExpenses);
-            document.getElementById('stat-balance').innerText = fmt(totalSales - totalExpenses);
-        };
+        window.deleteProduct = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id)); };
+        window.deleteSupplier = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id)); };
+        window.deleteExpense = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id)); };
+        window.signOutUser = () => { if(confirm("¿Cerrar sesión?")) signOut(auth); };
+        window.showToast = (m) => { const t = document.getElementById('toast'); if(t){ t.innerText = m; t.classList.remove('opacity-0'); setTimeout(() => t.classList.add('opacity-0'), 3000); } };
         window.updateSupplierSelect = () => { const s = document.getElementById('p-supplier'); if (s) s.innerHTML = '<option value="">Seleccionar</option>' + suppliers.map(x => `<option value="${x.id}">${x.name}</option>`).join(''); };
         window.updateDatalists = () => {
             const nEl = document.getElementById('list-product-names'); const bEl = document.getElementById('list-brands');
             if (nEl) nEl.innerHTML = [...new Set(products.map(p => p.name))].map(n => `<option value="${n}">`).join('');
             if (bEl) bEl.innerHTML = [...new Set(products.map(p => p.brand))].map(b => `<option value="${b}">`).join('');
         };
-        window.deleteProduct = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id)); };
-        window.deleteSupplier = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id)); };
-        window.deleteExpense = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id)); };
-        window.signOutUser = () => { if(confirm("¿Cerrar sesión?")) signOut(auth); };
-        window.removeFromCart = (id) => { cart = cart.filter(i => i.id !== id); window.renderCart(); };
+
         window.viewClientHistory = (id, name) => {
             const clientSales = historyRaw.filter(h => h.customerId === id);
             document.getElementById('client-history-name').innerText = `Compras de ${name}`;
@@ -757,17 +814,6 @@
                     <p class="text-sm">${h.detail}</p><p class="text-right font-bold mt-2">${fmt(h.amount)}</p>
                 </div>`).join('') : '<p class="text-center italic text-gray-500">Sin compras registradas</p>';
             openModal('modal-client-history');
-        };
-        window.filterHistory = () => {
-            const from = document.getElementById('hist-from').value ? new Date(document.getElementById('hist-from').value + "T00:00:00").getTime() : 0;
-            const to = document.getElementById('hist-to').value ? new Date(document.getElementById('hist-to').value + "T23:59:59").getTime() : Infinity;
-            const term = document.getElementById('hist-search').value.toLowerCase();
-            const type = document.getElementById('hist-type').value;
-            const filtered = historyRaw.filter(h => { 
-                const ts = h.date?.toDate ? h.date.toDate().getTime() : 0; 
-                return ts >= from && ts <= to && (h.detail.toLowerCase().includes(term) || (h.customerName && h.customerName.toLowerCase().includes(term))) && (!type || h.saleMode === type); 
-            });
-            document.getElementById('history-list').innerHTML = filtered.sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)).map(h => `<tr class="border-b border-gray-800 text-xs"><td class="p-4 text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-700">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-gray-300">${h.customerName || 'Mostrador'}</td><td class="p-4 text-gray-400 max-w-xs truncate">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join('');
         };
 
         window.addEventListener('load', startApp);
