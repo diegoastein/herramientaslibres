@@ -180,7 +180,7 @@
             </div>
             <div class="bg-card rounded-xl border border-gray-800 overflow-x-auto shadow-xl">
                 <table class="w-full text-left min-w-[900px]">
-                    <thead class="bg-black/5 border-b border-gray-800 text-xs uppercase opacity-70">
+                    <thead class="bg-black/10 border-b border-gray-800 text-xs uppercase opacity-70">
                         <tr>
                             <th class="p-4">Imagen</th>
                             <th class="p-4">Producto</th>
@@ -240,7 +240,7 @@
                         <div class="grid grid-cols-1 gap-3">
                             <div>
                                 <label class="block text-[10px] opacity-60 uppercase font-bold">Cliente (Busca o Registra)</label>
-                                <input type="text" id="sale-customer-search" placeholder="Nombre para buscar..." class="w-full p-2 text-sm rounded outline-none shadow-sm" oninput="window.suggestCustomers(this.value)">
+                                <input type="text" id="sale-customer-search" placeholder="Nombre para buscar..." class="w-full p-2 text-sm rounded outline-none shadow-sm" oninput="suggestCustomers(this.value)">
                                 <div id="customer-suggestions" class="rounded mt-1 hidden max-h-40 overflow-y-auto border border-gray-700 z-[60] shadow-2xl"></div>
                             </div>
                             <div id="new-customer-fields" class="space-y-2 hidden border-l-2 border-amber-500 pl-3 pt-2 bg-black/5 p-2 rounded">
@@ -279,7 +279,7 @@
         <!-- SECCIÓN: HISTORIAL -->
         <section id="sec-historial" class="tab-content hidden">
             <h2 class="text-2xl font-bold mb-6">Historial de Ventas</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-card p-4 rounded-xl border border-gray-800 shadow-sm">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-card p-4 rounded-xl border border-gray-800 shadow-md">
                 <input type="date" id="hist-from" class="w-full p-2 rounded text-sm" onchange="window.filterHistory()">
                 <input type="date" id="hist-to" class="w-full p-2 rounded text-sm" onchange="window.filterHistory()">
                 <input type="text" id="hist-search" placeholder="Herramienta, cliente o proveedor..." class="w-full p-2 rounded text-sm shadow-sm" oninput="window.filterHistory()">
@@ -291,7 +291,7 @@
             </div>
             <div class="bg-card rounded-xl border border-gray-800 overflow-x-auto shadow-lg">
                 <table class="w-full text-left">
-                    <thead class="bg-black/5 border-b border-gray-800 text-xs uppercase opacity-70">
+                    <thead class="bg-black/10 border-b border-gray-800 text-xs uppercase opacity-70">
                         <tr><th class="p-4">Fecha</th><th class="p-4">Tipo</th><th class="p-4">Cliente</th><th class="p-4">Artículos</th><th class="p-4">Total</th></tr>
                     </thead>
                     <tbody id="history-list"></tbody>
@@ -301,6 +301,7 @@
 
         <!-- SECCIÓN: CONTABILIDAD -->
         <section id="sec-contabilidad" class="tab-content hidden">
+            <!-- Filtro Mensual -->
             <div class="flex items-center gap-4 mb-6 bg-card p-4 rounded-xl border border-gray-800 shadow-sm">
                 <label class="text-xs opacity-60 uppercase font-bold">Ver mes:</label>
                 <input type="month" id="accounting-month" class="p-2 rounded outline-none text-sm" onchange="window.calculateStats(); window.renderExpenses();">
@@ -337,7 +338,7 @@
 
     </main>
 
-    <!-- MODALES -->
+    <!-- MODAL PRODUCTO -->
     <div id="modal-product" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
         <div class="bg-card w-full max-w-2xl rounded-2xl border border-gray-700 overflow-hidden max-h-[95vh] flex flex-col modal-container shadow-2xl">
             <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-black/5">
@@ -367,7 +368,7 @@
                         <input type="hidden" id="p-image-data">
                     </div>
                     <div class="md:col-span-2 flex gap-2 pt-6 pb-2">
-                        <button type="submit" class="btn-primary flex-1 py-4 rounded-xl shadow-lg hover:scale-[1.01] active:scale-95 transition-all text-lg">
+                        <button type="submit" class="btn-primary flex-1 py-4 rounded-xl shadow-lg hover:scale-[1.01] active:scale-95 transition-all text-lg font-bold">
                             Guardar Cambios
                         </button>
                     </div>
@@ -376,6 +377,7 @@
         </div>
     </div>
 
+    <!-- MODALES VARIOS -->
     <div id="modal-client-history" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
         <div class="bg-card w-full max-w-2xl rounded-2xl border border-gray-700 overflow-hidden shadow-2xl">
             <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-black/5">
@@ -390,6 +392,27 @@
         <div class="relative max-w-4xl max-h-screen">
             <button class="absolute -top-12 right-0 text-white hover:text-accent-color transition-colors"><i data-lucide="x" class="w-10 h-10"></i></button>
             <img id="enlarged-image" src="" class="max-w-full max-h-[85vh] rounded-lg shadow-2xl border border-gray-600 bg-white/5">
+        </div>
+    </div>
+
+    <div id="modal-expense" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
+        <div class="bg-card w-full max-w-md rounded-2xl border border-gray-700 overflow-hidden shadow-2xl">
+            <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-black/5"><h3>Egreso</h3><button onclick="closeModal('modal-expense')"><i data-lucide="x"></i></button></div>
+            <form id="form-expense" class="p-6 space-y-4">
+                <input type="hidden" id="e-id">
+                <div><label class="text-xs opacity-60">Concepto</label><input type="text" id="e-concept" required class="w-full p-2 rounded outline-none shadow-sm"></div>
+                <div><label class="text-xs opacity-60">Categoría</label>
+                    <select id="e-category" class="w-full p-2 rounded outline-none shadow-sm">
+                        <option value="Servicios">Servicios (Luz/Internet)</option>
+                        <option value="Impuestos">Impuestos</option>
+                        <option value="Mercadería">Compra de Herramientas</option>
+                        <option value="Local">Alquiler / Mantenimiento</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                </div>
+                <div><label class="text-xs opacity-60">Monto ($)</label><input type="number" step="0.01" id="e-amount" required class="w-full p-2 rounded outline-none shadow-sm"></div>
+                <div class="flex gap-2 pt-4"><button type="submit" class="btn-primary flex-1 py-3 rounded-lg shadow-md">Guardar Registro</button></div>
+            </form>
         </div>
     </div>
 
@@ -417,7 +440,7 @@
 
         const fmt = (n) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
 
-        // --- ASIGNACIÓN TEMPRANA DE FUNCIONES AL OBJETO WINDOW (PARA EVITAR TYPEERRORS) ---
+        // --- ASIGNACIONES GLOBALES (DEFINIR ANTES DE USAR) ---
         
         window.toggleTheme = () => {
             const isDark = document.body.classList.toggle('dark-mode');
@@ -429,43 +452,42 @@
             }
         };
 
-        window.setSaleType = (t) => { 
-            saleType = t; 
-            const bP = document.getElementById('btn-presencial'); const bO = document.getElementById('btn-online'); 
-            if(bP) bP.className = t === 'presencial' ? 'py-2 rounded border border-amber-500 bg-amber-500/10 text-amber-600 font-bold text-xs shadow-inner' : 'py-2 rounded border border-gray-700 text-adaptive text-xs';
-            if(bO) bO.className = t === 'online' ? 'py-2 rounded border border-amber-500 bg-amber-500/10 text-amber-600 font-bold text-xs shadow-inner' : 'py-2 rounded border border-gray-700 text-adaptive text-xs';
+        window.switchTab = (id) => {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            const target = document.getElementById(`sec-${id}`);
+            if (target) target.classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('tab-active'));
+            const tabBtn = document.getElementById(`tab-${id}`);
+            if(tabBtn) tabBtn.classList.add('tab-active');
+            lucide.createIcons();
         };
 
-        window.addToCartById = (id) => {
-            const p = products.find(x => x.id === id); if(!p) return;
-            const it = cart.find(i => i.id === p.id);
-            if(it) { if(it.qty < p.stock) it.qty++; else window.showToast("Stock insuficiente"); }
-            else { if(p.stock > 0) cart.push({ ...p, qty: 1 }); else window.showToast("Sin stock"); }
-            const sInp = document.getElementById('search-product'); if(sInp) sInp.value = '';
-            const sRes = document.getElementById('search-results'); if(sRes) sRes.innerHTML = '';
-            window.renderCart();
+        window.openModal = (id) => { const el = document.getElementById(id); if (el) { el.classList.remove('hidden'); el.classList.add('flex'); lucide.createIcons(); } };
+        window.closeModal = (id) => { const el = document.getElementById(id); if (el) { el.classList.add('hidden'); el.classList.remove('flex'); } };
+
+        window.updateSupplierSelect = () => { 
+            const s = document.getElementById('p-supplier'); 
+            if (s) s.innerHTML = '<option value="">Seleccionar</option>' + suppliers.map(x => `<option value="${x.id}">${x.name}</option>`).join(''); 
         };
 
-        window.renderCart = () => { 
-            const c = document.getElementById('cart-items'); if(!c) return; 
-            if(cart.length === 0) c.innerHTML = '<div class="opacity-40 text-center py-8 italic text-xs uppercase tracking-widest text-adaptive">Carrito vacío</div>'; 
-            else c.innerHTML = cart.map(i => `<div class="flex justify-between items-center bg-black/5 p-3 rounded-lg border border-gray-200 dark:border-gray-800"><div><p class="text-xs font-bold uppercase text-adaptive">${i.name}</p><p class="text-[10px] opacity-60 text-adaptive">${i.brand || 'S/M'} | ${fmt(i.price)} x ${i.qty}</p></div><div class="flex items-center gap-3"><span class="font-bold accent-color text-sm">${fmt(i.price * i.qty)}</span><button onclick="window.removeFromCart('${i.id}')" class="text-red-400 hover:scale-110 transition-transform"><i data-lucide="x-circle" class="w-4 h-4"></i></button></div></div>`).join(''); 
-            document.getElementById('cart-total').innerText = fmt(cart.reduce((s, i) => s + (i.price * i.qty), 0)); 
-            document.getElementById('cart-count').innerText = cart.length; 
-            lucide.createIcons(); 
+        window.updateDatalists = () => { 
+            const nEl = document.getElementById('list-product-names'); 
+            const bEl = document.getElementById('list-brands'); 
+            if (nEl) nEl.innerHTML = [...new Set(products.map(p => p.name))].map(n => `<option value="${n}">`).join(''); 
+            if (bEl) bEl.innerHTML = [...new Set(products.map(p => p.brand))].map(b => `<option value="${b}">`).join(''); 
         };
 
         window.renderStock = () => {
             const sl = document.getElementById('stock-list'); if(!sl) return;
-            const sVal = document.getElementById('stock-search').value.toLowerCase();
+            const sVal = (document.getElementById('stock-search')?.value || "").toLowerCase();
             let f = products.filter(p => {
-                const sName = suppliers.find(s => s.id === p.supplierId)?.name || 'S/P';
+                const sName = (suppliers.find(s => s.id === p.supplierId)?.name || 'S/P').toLowerCase();
                 return (p.name && p.name.toLowerCase().includes(sVal)) || 
                        (p.brand && p.brand.toLowerCase().includes(sVal)) || 
                        (p.code && p.code.toLowerCase().includes(sVal)) ||
-                       (sName.toLowerCase().includes(sVal));
+                       sName.includes(sVal);
             });
-            if (!sVal) f = [...f].sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 20);
+            if (!sVal) f = [...f].sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 25);
             sl.innerHTML = f.map(p => {
                 const sName = suppliers.find(s => s.id === p.supplierId)?.name || 'S/P';
                 return `<tr class="border-b border-gray-800 hover:bg-black/5 transition-colors">
@@ -487,32 +509,32 @@
 
         window.renderSuppliers = () => {
             const spl = document.getElementById('supplier-list'); if(!spl) return;
-            const sVal = document.getElementById('supplier-search').value.toLowerCase();
+            const sVal = (document.getElementById('supplier-search')?.value || "").toLowerCase();
             const f = suppliers.filter(s => (s.name && s.name.toLowerCase().includes(sVal)) || (s.city && s.city.toLowerCase().includes(sVal)));
-            spl.innerHTML = f.map(s => `<div class="bg-card p-6 rounded-xl border border-gray-800 relative group shadow-md"><div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity"><button onclick='window.editSupplier(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="window.deleteSupplier('${s.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div><h4 class="text-lg font-bold mb-2 text-adaptive">${s.name}</h4><div class="space-y-1 text-xs opacity-60"><p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${s.whatsapp || '-'}</p><p><i data-lucide="map-pin" class="inline w-3 h-3 mr-1"></i> ${s.city || 'S/C'}</p></div></div>`).join('');
+            spl.innerHTML = f.map(s => `<div class="bg-card p-6 rounded-xl border border-gray-800 relative group shadow-md"><div class="absolute top-4 right-4 flex gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"><button onclick='window.editSupplier(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="window.deleteSupplier('${s.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div><h4 class="text-lg font-bold mb-2 text-adaptive">${s.name}</h4><div class="space-y-1 text-xs opacity-60"><p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${s.whatsapp || '-'}</p><p><i data-lucide="map-pin" class="inline w-3 h-3 mr-1"></i> ${s.city || 'S/C'}</p></div></div>`).join('');
             lucide.createIcons();
         };
 
         window.renderCustomers = () => {
-            const el = document.getElementById('filter-clients'); if (!el) return;
-            const term = el.value.toLowerCase();
+            const cl = document.getElementById('customer-list'); if(!cl) return;
+            const el = document.getElementById('filter-clients');
+            const term = el ? el.value.toLowerCase() : '';
             let f = customers.filter(c => (c.name && c.name.toLowerCase().includes(term)) || (c.surname && c.surname.toLowerCase().includes(term)));
-            if (!term) f = f.slice(0, 10);
-            const cl = document.getElementById('customer-list');
-            if (cl) cl.innerHTML = f.map(c => `<div class="bg-card p-6 rounded-xl border border-gray-800 relative group shadow-md"><div class="absolute top-4 right-4 flex gap-2"><button onclick='window.editCustomerById("${c.id}")' class="opacity-40 hover:opacity-100 hover:text-amber-500"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick="window.viewClientHistory('${c.id}', '${c.name} ${c.surname || ''}')" class="text-amber-500 hover:scale-110"><i data-lucide="history" class="w-5 h-5"></i></button></div><h4 class="text-lg font-bold mb-1 text-adaptive">${c.name} ${c.surname || ''}</h4><div class="text-xs opacity-60 space-y-1"><p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${c.phone || 'S/T'}</p><p><i data-lucide="mail" class="inline w-3 h-3 mr-1"></i> ${c.email || 'S/E'}</p></div></div>`).join('');
+            if (!term) f = f.slice(0, 15);
+            cl.innerHTML = f.map(c => `<div class="bg-card p-6 rounded-xl border border-gray-800 relative group shadow-md"><div class="absolute top-4 right-4 flex gap-2"><button onclick='window.editCustomerById("${c.id}")' class="opacity-40 hover:opacity-100 hover:text-amber-500"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick="window.viewClientHistory('${c.id}', '${c.name} ${c.surname || ''}')" class="text-amber-500 hover:scale-110"><i data-lucide="history" class="w-5 h-5"></i></button></div><h4 class="text-lg font-bold mb-1 text-adaptive">${c.name} ${c.surname || ''}</h4><div class="text-xs opacity-60 space-y-1"><p><i data-lucide="phone" class="inline w-3 h-3 mr-1"></i> ${c.phone || 'S/T'}</p><p><i data-lucide="mail" class="inline w-3 h-3 mr-1"></i> ${c.email || 'S/E'}</p></div></div>`).join('');
             lucide.createIcons();
         };
 
         window.renderExpenses = () => {
             const el = document.getElementById('expense-list'); if(!el) return;
-            const m = document.getElementById('accounting-month').value;
+            const m = document.getElementById('accounting-month')?.value || "";
             const f = expenses.filter(e => e.date && e.date.toDate().toISOString().slice(0, 7) === m);
             el.innerHTML = f.map(e => `<tr class="border-b border-gray-800 hover:bg-black/5 transition-colors"><td class="p-4 text-xs opacity-60">${e.date?.toDate ? e.date.toDate().toLocaleDateString() : '-'}</td><td class="p-4 font-medium text-adaptive">${e.concept}</td><td class="p-4"><span class="text-[10px] bg-gray-200 dark:bg-gray-700/30 px-2 py-0.5 rounded uppercase font-bold text-adaptive">${e.category}</span></td><td class="p-4 font-bold text-red-600">${fmt(e.amount)}</td><td class="p-4 flex gap-2"><button onclick='window.editExpense(${JSON.stringify(e).replace(/'/g, "&apos;")})' class="opacity-40 hover:opacity-100 hover:text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="window.deleteExpense('${e.id}')" class="opacity-40 hover:opacity-100 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join('');
             lucide.createIcons();
         };
 
         window.calculateStats = () => {
-            const m = document.getElementById('accounting-month').value;
+            const m = document.getElementById('accounting-month')?.value || "";
             const fs = historyRaw.filter(h => h.date && h.date.toDate().toISOString().slice(0, 7) === m);
             const fe = expenses.filter(e => e.date && e.date.toDate().toISOString().slice(0, 7) === m);
             const ts = fs.reduce((s, h) => s + (h.amount || 0), 0);
@@ -522,25 +544,12 @@
             const sBal = document.getElementById('stat-balance'); if(sBal) sBal.innerText = fmt(ts - te);
         };
 
-        window.filterHistory = () => { 
-            const hl = document.getElementById('history-list'); if(!hl) return; 
-            const fF = document.getElementById('hist-from'); const fT = document.getElementById('hist-to');
-            const fS = document.getElementById('hist-search'); const fTy = document.getElementById('hist-type');
-            const from = fF?.value ? new Date(fF.value + "T00:00:00").getTime() : 0;
-            const to = fT?.value ? new Date(fT.value + "T23:59:59").getTime() : Infinity;
-            const term = fS?.value.toLowerCase() || ""; const type = fTy?.value;
-
-            let f = historyRaw.filter(h => {
-                const ts = h.date?.toDate ? h.date.toDate().getTime() : 0;
-                const matchesText = h.detail.toLowerCase().includes(term) || (h.customerName && h.customerName.toLowerCase().includes(term));
-                const matchesType = !type || h.saleMode === type;
-                // Búsqueda por proveedor en el historial
-                const hasSupplier = h.items?.some(item => suppliers.find(s => s.id === item.supplierId)?.name.toLowerCase().includes(term));
-                return ts >= from && ts <= to && (matchesText || hasSupplier) && matchesType;
-            }).sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)); 
-            
-            if(!fF?.value && !fT?.value && !term && !type) f = f.slice(0,10); 
-            hl.innerHTML = f.map(h => `<tr class="border-b border-gray-200 dark:border-gray-800 text-xs text-adaptive"><td class="p-4 opacity-60">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-200 dark:border-gray-800 font-bold">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-adaptive">${h.customerName || 'Mostrador'}</td><td class="p-4 opacity-70 truncate max-w-[200px]">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join(''); 
+        window.editProductById = (id) => {
+            const p = products.find(x => x.id === id); if(!p) return;
+            const fields = { 'p-id': p.id, 'p-name': p.name, 'p-brand': p.brand, 'p-model': p.model, 'p-code': p.code, 'p-supplier': p.supplierId, 'p-stock': p.stock, 'p-cost': p.cost, 'p-price': p.price, 'p-image-data': p.image };
+            Object.keys(fields).forEach(k => { const el = document.getElementById(k); if(el) el.value = fields[k] || ''; });
+            const pc = document.getElementById('image-preview-container'); if(pc) pc.innerHTML = p.image ? `<img src="${p.image}" class="w-full h-full object-cover">` : '';
+            window.openModal('modal-product');
         };
 
         window.editCustomerById = (id) => {
@@ -556,11 +565,54 @@
             window.openModal('modal-supplier');
         };
 
-        window.deleteSupplier = async (id) => { if(confirm("¿Seguro que desea eliminar este proveedor?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id)); };
+        window.deleteSupplier = async (id) => { if(confirm("¿Eliminar proveedor?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id)); };
         window.deleteProduct = async (id) => { if(confirm("¿Eliminar herramienta?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id)); };
-        window.deleteExpense = async (id) => { if(confirm("¿Eliminar registro?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id)); };
+        window.deleteExpense = async (id) => { if(confirm("¿Eliminar egreso?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id)); };
         window.editExpense = (e) => { document.getElementById('e-id').value = e.id; document.getElementById('e-concept').value = e.concept; document.getElementById('e-category').value = e.category; document.getElementById('e-amount').value = e.amount; window.openModal('modal-expense'); };
-        
+
+        window.setSaleType = (t) => { 
+            saleType = t; 
+            const bP = document.getElementById('btn-presencial'); const bO = document.getElementById('btn-online'); 
+            if(bP) bP.className = t === 'presencial' ? 'py-2 rounded border border-amber-500 bg-amber-500/10 text-amber-600 font-bold text-xs shadow-inner' : 'py-2 rounded border border-gray-700 text-adaptive text-xs';
+            if(bO) bO.className = t === 'online' ? 'py-2 rounded border border-amber-500 bg-amber-500/10 text-amber-600 font-bold text-xs shadow-inner' : 'py-2 rounded border border-gray-700 text-adaptive text-xs';
+        };
+
+        window.addToCartById = (id) => {
+            const p = products.find(x => x.id === id); if(!p) return;
+            const it = cart.find(i => i.id === p.id);
+            if(it) { if(it.qty < p.stock) it.qty++; else window.showToast("Stock insuficiente"); }
+            else { if(p.stock > 0) cart.push({ ...p, qty: 1 }); else window.showToast("Sin stock"); }
+            const sInp = document.getElementById('search-product'); if(sInp) sInp.value = '';
+            const sRes = document.getElementById('search-results'); if(sRes) sRes.innerHTML = '';
+            window.renderCart();
+        };
+
+        window.showToast = (m) => { const t = document.getElementById('toast'); if(t){ t.innerText = m; t.classList.remove('opacity-0'); t.style.transform = 'translateY(-10px)'; setTimeout(() => { t.classList.add('opacity-0'); t.style.transform = 'translateY(0px)'; }, 3000); } };
+        window.viewLargeImage = (src) => { const v = document.getElementById('image-viewer'); const i = document.getElementById('enlarged-image'); if(v && i && src) { i.src = src; v.classList.remove('hidden'); v.classList.add('flex'); lucide.createIcons(); } };
+        window.closeImageViewer = () => { const v = document.getElementById('image-viewer'); if(v) { v.classList.add('hidden'); v.classList.remove('flex'); } };
+        window.removeFromCart = (id) => { cart = cart.filter(i => i.id !== id); window.renderCart(); };
+        window.signOutUser = () => { if(confirm("¿Cerrar sesión?")) signOut(auth); };
+
+        window.filterHistory = () => { 
+            const hl = document.getElementById('history-list'); if(!hl) return; 
+            const fF = document.getElementById('hist-from'); const fT = document.getElementById('hist-to');
+            const fS = document.getElementById('hist-search'); const fTy = document.getElementById('hist-type');
+            const from = fF?.value ? new Date(fF.value + "T00:00:00").getTime() : 0;
+            const to = fT?.value ? new Date(fT.value + "T23:59:59").getTime() : Infinity;
+            const term = (fS?.value || "").toLowerCase(); const type = fTy?.value;
+
+            let f = historyRaw.filter(h => {
+                const ts = h.date?.toDate ? h.date.toDate().getTime() : 0;
+                const matchesText = h.detail.toLowerCase().includes(term) || (h.customerName && h.customerName.toLowerCase().includes(term));
+                const matchesType = !type || h.saleMode === type;
+                const hasSupplier = h.items?.some(item => suppliers.find(s => s.id === item.supplierId)?.name.toLowerCase().includes(term));
+                return ts >= from && ts <= to && (matchesText || hasSupplier) && matchesType;
+            }).sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)); 
+            
+            if(!fF?.value && !fT?.value && !term && !type) f = f.slice(0, 15); 
+            hl.innerHTML = f.map(h => `<tr class="border-b border-gray-200 dark:border-gray-800 text-xs text-adaptive"><td class="p-4 opacity-70">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-200 dark:border-gray-800 font-bold">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-adaptive">${h.customerName || 'Mostrador'}</td><td class="p-4 opacity-70 truncate max-w-[200px] text-adaptive">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join(''); 
+        };
+
         window.suggestCustomers = (term) => {
             const sug = document.getElementById('customer-suggestions'); const fields = document.getElementById('new-customer-fields');
             selectedCustomerId = null; fields.classList.add('hidden');
@@ -576,20 +628,12 @@
 
         window.viewClientHistory = (id, name) => {
             const cs = historyRaw.filter(h => h.customerId === id);
-            document.getElementById('client-history-name').innerText = `Historial: ${name}`;
-            document.getElementById('client-history-content').innerHTML = cs.length ? cs.map(h => `<div class="mb-4 p-4 bg-black/5 rounded border border-gray-200 dark:border-gray-800 shadow-sm"><div class="flex justify-between text-xs mb-1"><span class="opacity-60">${h.date?.toDate ? h.date.toDate().toLocaleDateString() : 'Reciente'}</span><span class="font-bold uppercase text-amber-500">${h.saleMode}</span></div><p class="text-sm text-adaptive">${h.detail}</p><p class="text-right font-bold mt-2 text-amber-600">${fmt(h.amount)}</p></div>`).join('') : '<p class="text-center italic opacity-40 text-adaptive p-10">Sin compras registradas</p>';
+            const content = document.getElementById('client-history-content');
+            const title = document.getElementById('client-history-name');
+            if(title) title.innerText = `Historial: ${name}`;
+            if(content) content.innerHTML = cs.length ? cs.map(h => `<div class="mb-4 p-4 bg-black/5 rounded border border-gray-200 dark:border-gray-800 shadow-sm"><div class="flex justify-between text-xs mb-1 text-adaptive"><span class="opacity-60">${h.date?.toDate ? h.date.toDate().toLocaleDateString() : 'Reciente'}</span><span class="font-bold uppercase text-amber-500">${h.saleMode}</span></div><p class="text-sm text-adaptive">${h.detail}</p><p class="text-right font-bold mt-2 text-amber-600">${fmt(h.amount)}</p></div>`).join('') : '<p class="text-center italic opacity-40 text-adaptive p-10">Sin compras registradas</p>';
             window.openModal('modal-client-history');
         };
-
-        window.showToast = (m) => { const t = document.getElementById('toast'); if(t){ t.innerText = m; t.classList.remove('opacity-0'); t.style.transform = 'translateY(-10px)'; setTimeout(() => { t.classList.add('opacity-0'); t.style.transform = 'translateY(0px)'; }, 3000); } };
-        window.switchTab = (id) => { document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden')); const target = document.getElementById(`sec-${id}`); if (target) target.classList.remove('hidden'); document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('tab-active')); const tabBtn = document.getElementById(`tab-${id}`); if(tabBtn) tabBtn.classList.add('tab-active'); lucide.createIcons(); };
-        window.openModal = (id) => { const el = document.getElementById(id); if (el) { el.classList.remove('hidden'); el.classList.add('flex'); lucide.createIcons(); } };
-        window.closeModal = (id) => { const el = document.getElementById(id); if (el) { el.classList.add('hidden'); el.classList.remove('flex'); } };
-        window.prepareNew = (id) => { const el = document.getElementById(id); if (el) { const form = el.querySelector('form'); if(form) form.reset(); const hid = el.querySelector('input[type="hidden"]'); if(hid) hid.value = ''; const pc = document.getElementById('image-preview-container'); if (pc && id === 'modal-product') pc.innerHTML = ''; window.openModal(id); } };
-        window.viewLargeImage = (src) => { const v = document.getElementById('image-viewer'); const i = document.getElementById('enlarged-image'); if(v && i && src) { i.src = src; v.classList.remove('hidden'); v.classList.add('flex'); lucide.createIcons(); } };
-        window.closeImageViewer = () => { const v = document.getElementById('image-viewer'); if(v) { v.classList.add('hidden'); v.classList.remove('flex'); } };
-        window.removeFromCart = (id) => { cart = cart.filter(i => i.id !== id); window.renderCart(); };
-        window.signOutUser = () => { if(confirm("¿Cerrar sesión?")) signOut(auth); };
 
         window.handleImageUpload = (e) => { 
             const f = e.target.files[0]; if(!f) return; 
@@ -607,9 +651,6 @@
             r.readAsDataURL(f); 
         };
 
-        window.updateSupplierSelect = () => { const s = document.getElementById('p-supplier'); if (s) s.innerHTML = '<option value="">Seleccionar</option>' + suppliers.map(x => `<option value="${x.id}">${x.name}</option>`).join(''); };
-        window.updateDatalists = () => { const nEl = document.getElementById('list-product-names'); const bEl = document.getElementById('list-brands'); if (nEl) nEl.innerHTML = [...new Set(products.map(p => p.name))].map(n => `<option value="${n}">`).join(''); if (bEl) bEl.innerHTML = [...new Set(products.map(p => p.brand))].map(b => `<option value="${b}">`).join(''); };
-
         window.exportStock = (onlyFiltered) => {
             const sVal = document.getElementById('stock-search').value.toLowerCase();
             let d = onlyFiltered ? products.filter(p => (p.name && p.name.toLowerCase().includes(sVal)) || (p.brand && p.brand.toLowerCase().includes(sVal)) || (p.model && p.model.toLowerCase().includes(sVal)) || (suppliers.find(s => s.id === p.supplierId)?.name.toLowerCase().includes(sVal))) : products;
@@ -625,7 +666,31 @@
         };
 
         window.handleInvoiceDownload = () => { if(currentInvoiceData) window.generateInvoice(currentInvoiceData.items, currentInvoiceData.total, currentInvoiceData.customer, true); };
-        window.handleInvoiceShare = async () => { if(!currentInvoiceData) return; const pdfBlob = window.generateInvoice(currentInvoiceData.items, currentInvoiceData.total, currentInvoiceData.customer, false); if (navigator.share) { const file = new File([pdfBlob], `Factura_${currentInvoiceData.customer.replace(/\s+/g, '_')}.pdf`, { type: 'application/pdf' }); try { await navigator.share({ files: [file], title: 'Comprobante HL' }); } catch (err) {} } else { window.showToast("Compartir no disponible"); } };
+        window.handleInvoiceShare = async () => { if(!currentInvoiceData) return; const pdfBlob = window.generateInvoice(currentInvoiceData.items, currentInvoiceData.total, currentInvoiceData.customer, false); if (navigator.share) { const file = new File([pdfBlob], `Factura_${currentInvoiceData.customer.replace(/\s+/g, '_')}.pdf`, { type: 'application/pdf' }); try { await navigator.share({ files: [file], title: 'HL Comprobante' }); } catch (err) {} } else { window.showToast("Compartir no disponible"); } };
+
+        window.processSale = async () => {
+            if(!db || !auth.currentUser) return window.showToast("Sin conexión");
+            if(cart.length === 0) return window.showToast("Carrito vacío");
+            const searchVal = document.getElementById('sale-customer-search').value.trim();
+            if(!searchVal && !selectedCustomerId) return window.showToast("Identifique al cliente");
+            try {
+                let cId = selectedCustomerId; let cFull = searchVal;
+                if(!cId) {
+                    const fn = document.getElementById('c-name').value.trim(); const ln = document.getElementById('c-surname').value.trim();
+                    if(!fn || !ln) return window.showToast("Nombre y Apellido requeridos");
+                    const newC = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'customers'), { name: fn, surname: ln, phone: document.getElementById('c-phone').value, email: document.getElementById('c-email').value, createdAt: serverTimestamp() });
+                    cId = newC.id; cFull = `${fn} ${ln}`;
+                }
+                for(const it of cart) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', it.id), { stock: increment(-it.qty) }); }
+                const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+                const sData = { type: 'venta', saleMode: saleType, customerId: cId, customerName: cFull, detail: cart.map(i => `${i.qty}x ${i.name} [${i.brand}]`).join(', '), amount: total, items: [...cart], date: serverTimestamp() };
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'history'), sData);
+                currentInvoiceData = { items: [...cart], total: total, customer: cFull };
+                cart = []; window.renderCart();
+                document.getElementById('sale-customer-search').value = ''; document.getElementById('new-customer-fields').classList.add('hidden');
+                window.openModal('modal-success-sale');
+            } catch(e) { window.showToast("Error al procesar la venta"); }
+        };
 
         window.generateInvoice = (items, total, customer, download = true) => {
             const { jsPDF } = window.jspdf; const doc = new jsPDF();
@@ -655,6 +720,7 @@
                     if(overlay) overlay.classList.add('hidden');
                     document.getElementById('auth-status').innerText = 'En Línea';
                     initListeners();
+                    setTimeout(() => window.switchTab('stock'), 300);
                 } else {
                     if(overlay) overlay.classList.remove('hidden');
                 }
@@ -663,8 +729,16 @@
             document.getElementById('login-form').onsubmit = async (e) => {
                 e.preventDefault();
                 try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } 
-                catch (err) { const errEl = document.getElementById('login-error'); if(errEl) { errEl.innerText = "Error: Acceso denegado."; errEl.classList.remove('hidden'); } }
+                catch (err) { const errEl = document.getElementById('login-error'); if(errEl) { errEl.innerText = "Acceso denegado."; errEl.classList.remove('hidden'); } }
             };
+
+            const forms = [
+                {id: 'form-product', fn: handleProductSubmit},
+                {id: 'form-supplier', fn: handleSupplierSubmit},
+                {id: 'form-expense', fn: handleExpenseSubmit},
+                {id: 'form-client', fn: handleClientEditSubmit}
+            ];
+            forms.forEach(f => { const el = document.getElementById(f.id); if(el) el.onsubmit = f.fn; });
 
             window.setSaleType('presencial');
             lucide.createIcons();
@@ -678,10 +752,10 @@
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), sn => { expenses = sn.docs.map(d => ({id:d.id, ...d.data()})); window.renderExpenses(); window.calculateStats(); });
         }
 
-        async function handleProductSubmit(e) { e.preventDefault(); const id = document.getElementById('p-id').value; const data = { name: document.getElementById('p-name').value, brand: document.getElementById('p-brand').value, model: document.getElementById('p-model').value, code: document.getElementById('p-code').value, supplierId: document.getElementById('p-supplier').value, stock: parseInt(document.getElementById('p-stock').value), cost: parseFloat(document.getElementById('p-cost').value), price: parseFloat(document.getElementById('p-price').value), image: document.getElementById('p-image-data').value, updatedAt: serverTimestamp() }; if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), data); else { data.createdAt = serverTimestamp(); await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), data); } closeModal('modal-product'); window.showToast("Herramienta guardada"); }
-        async function handleSupplierSubmit(e) { e.preventDefault(); const id = document.getElementById('s-id').value; const data = { name: document.getElementById('s-name').value, whatsapp: document.getElementById('s-whatsapp').value, phone: document.getElementById('s-phone').value, email: document.getElementById('s-email').value, address: document.getElementById('s-address').value, city: document.getElementById('s-city').value, country: document.getElementById('s-country').value, updatedAt: serverTimestamp() }; if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id), data); else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), { ...data, createdAt: serverTimestamp() }); closeModal('modal-supplier'); window.showToast("Proveedor guardado"); }
-        async function handleExpenseSubmit(e) { e.preventDefault(); const id = document.getElementById('e-id').value; const data = { concept: document.getElementById('e-concept').value, category: document.getElementById('e-category').value, amount: parseFloat(document.getElementById('e-amount').value), date: serverTimestamp() }; if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id), data); else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), data); closeModal('modal-expense'); window.showToast("Egreso registrado"); }
-        async function handleClientEditSubmit(e) { e.preventDefault(); const id = document.getElementById('edit-c-id').value; if(!id) return; const data = { name: document.getElementById('edit-c-name').value, surname: document.getElementById('edit-c-surname').value, phone: document.getElementById('edit-c-phone').value, email: document.getElementById('edit-c-email').value, updatedAt: serverTimestamp() }; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'customers', id), data); closeModal('modal-client'); window.showToast("Cliente actualizado"); }
+        async function handleProductSubmit(e) { e.preventDefault(); const id = document.getElementById('p-id').value; const data = { name: document.getElementById('p-name').value, brand: document.getElementById('p-brand').value, model: document.getElementById('p-model').value, code: document.getElementById('p-code').value, supplierId: document.getElementById('p-supplier').value, stock: parseInt(document.getElementById('p-stock').value), cost: parseFloat(document.getElementById('p-cost').value), price: parseFloat(document.getElementById('p-price').value), image: document.getElementById('p-image-data').value, updatedAt: serverTimestamp() }; if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), data); else { data.createdAt = serverTimestamp(); await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), data); } window.closeModal('modal-product'); window.showToast("Herramienta guardada"); }
+        async function handleSupplierSubmit(e) { e.preventDefault(); const id = document.getElementById('s-id').value; const data = { name: document.getElementById('s-name').value, whatsapp: document.getElementById('s-whatsapp').value, phone: document.getElementById('s-phone').value, email: document.getElementById('s-email').value, address: document.getElementById('s-address').value, city: document.getElementById('s-city').value, country: document.getElementById('s-country').value, updatedAt: serverTimestamp() }; if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id), data); else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), { ...data, createdAt: serverTimestamp() }); window.closeModal('modal-supplier'); window.showToast("Proveedor guardado"); }
+        async function handleExpenseSubmit(e) { e.preventDefault(); const id = document.getElementById('e-id').value; const data = { concept: document.getElementById('e-concept').value, category: document.getElementById('e-category').value, amount: parseFloat(document.getElementById('e-amount').value), date: serverTimestamp() }; if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id), data); else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), data); window.closeModal('modal-expense'); window.showToast("Egreso registrado"); }
+        async function handleClientEditSubmit(e) { e.preventDefault(); const id = document.getElementById('edit-c-id').value; if(!id) return; const data = { name: document.getElementById('edit-c-name').value, surname: document.getElementById('edit-c-surname').value, phone: document.getElementById('edit-c-phone').value, email: document.getElementById('edit-c-email').value, updatedAt: serverTimestamp() }; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'customers', id), data); window.closeModal('modal-client'); window.showToast("Cliente actualizado"); }
 
         window.addEventListener('load', startApp);
     </script>
