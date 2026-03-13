@@ -185,7 +185,6 @@
                                 <input type="text" id="sale-customer-search" placeholder="Escribe nombre para buscar..." class="w-full p-2 text-sm rounded outline-none" oninput="suggestCustomers(this.value)">
                                 <div id="customer-suggestions" class="bg-gray-800 rounded mt-1 hidden max-h-40 overflow-y-auto border border-gray-700"></div>
                             </div>
-                            <!-- Campos para nuevo cliente extendidos -->
                             <div id="new-customer-fields" class="space-y-2 hidden border-l-2 border-amber-500 pl-3 pt-2">
                                 <p class="text-[10px] text-amber-500 font-bold uppercase italic">Registrar Nuevo Cliente:</p>
                                 <div class="grid grid-cols-2 gap-2">
@@ -304,8 +303,12 @@
                 <div class="md:col-span-2">
                     <label class="text-xs text-gray-500">Imagen</label>
                     <div class="flex items-center gap-4">
-                        <label class="flex-1 cursor-pointer bg-gray-700 p-2 rounded text-center text-xs">Subir Imagen<input type="file" id="p-file-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)"></label>
-                        <div id="image-preview-container" class="w-12 h-12 bg-black rounded border border-gray-700 flex items-center justify-center"></div>
+                        <!-- Ajuste para celulares: Permitir Cámara o Archivo -->
+                        <label class="flex-1 cursor-pointer bg-gray-700 p-2 rounded text-center text-xs hover:bg-gray-600 transition-colors">
+                            <i data-lucide="camera" class="inline w-4 h-4 mr-1"></i> Foto o Cámara
+                            <input type="file" id="p-file-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                        </label>
+                        <div id="image-preview-container" class="w-12 h-12 bg-black rounded border border-gray-700 flex items-center justify-center overflow-hidden"></div>
                     </div>
                     <input type="hidden" id="p-image-data">
                 </div>
@@ -468,7 +471,7 @@
                 });
             }
 
-            // Vincular formularios existentes de forma segura
+            // Vincular formularios
             const fProd = document.getElementById('form-product'); if(fProd) fProd.onsubmit = handleProductSubmit;
             const fSupp = document.getElementById('form-supplier'); if(fSupp) fSupp.onsubmit = handleSupplierSubmit;
             const fExp = document.getElementById('form-expense'); if(fExp) fExp.onsubmit = handleExpenseSubmit;
@@ -677,7 +680,7 @@
             if(!term) { sug.classList.add('hidden'); fields.classList.add('hidden'); return; }
             const matches = customers.filter(c => (c.name && c.name.toLowerCase().includes(term.toLowerCase())) || (c.surname && c.surname.toLowerCase().includes(term.toLowerCase())) || (c.phone && c.phone.includes(term)));
             if(matches.length > 0) {
-                sug.innerHTML = matches.map(c => `<div onclick="window.selectCustomer('${c.id}', '${c.name}', '${c.surname || ''}')" class="p-2 hover:bg-amber-500/20 cursor-pointer text-xs border-b border-gray-700 font-bold">${c.name} ${c.surname || ''} (${c.phone || 'S/T'})</div>`).join('');
+                sug.innerHTML = matches.map(c => `<div onclick="window.selectCustomer('${c.id}', '${c.name}', '${c.surname || ''}')" class="p-2 hover:bg-amber-500/20 cursor-pointer text-xs border-b border-gray-700 font-bold text-white">${c.name} ${c.surname || ''} (${c.phone || 'S/T'})</div>`).join('');
                 sug.classList.remove('hidden'); fields.classList.add('hidden'); selectedCustomerId = null; 
             } else {
                 sug.classList.add('hidden'); fields.classList.remove('hidden'); selectedCustomerId = null;
@@ -704,8 +707,10 @@
                 if(p.stock > 0) cart.push({ ...p, qty: 1 }); 
                 else showToast("Sin stock"); 
             }
-            document.getElementById('search-product').value = ''; 
-            document.getElementById('search-results').innerHTML = ''; 
+            const sInp = document.getElementById('search-product');
+            if(sInp) sInp.value = ''; 
+            const sRes = document.getElementById('search-results');
+            if(sRes) sRes.innerHTML = ''; 
             window.renderCart();
         };
 
@@ -735,7 +740,8 @@
 
                 generateInvoice(cart, cart.reduce((s, i) => s + (i.price * i.qty), 0), customerFullName);
                 showToast("¡Venta Exitosa!"); cart = []; window.renderCart();
-                document.getElementById('sale-customer-search').value = ''; document.getElementById('new-customer-fields').classList.add('hidden');
+                const scInp = document.getElementById('sale-customer-search'); if(scInp) scInp.value = '';
+                const ncf = document.getElementById('new-customer-fields'); if(ncf) ncf.classList.add('hidden');
                 selectedCustomerId = null;
             } catch(e) { showToast("Error al procesar"); }
         };
