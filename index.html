@@ -198,7 +198,7 @@
                         <div class="grid grid-cols-1 gap-3">
                             <div>
                                 <label class="block text-[10px] text-gray-500 uppercase font-bold">Cliente (Busca o Registra)</label>
-                                <input type="text" id="sale-customer-search" placeholder="Escribe nombre para buscar..." class="w-full p-2 text-sm rounded outline-none" oninput="window.suggestCustomers(this.value)">
+                                <input type="text" id="sale-customer-search" placeholder="Escribe nombre para buscar..." class="w-full p-2 text-sm rounded outline-none" oninput="suggestCustomers(this.value)">
                                 <div id="customer-suggestions" class="bg-gray-800 rounded mt-1 hidden max-h-40 overflow-y-auto border border-gray-700"></div>
                             </div>
                             <!-- Campos para nuevo cliente extendidos -->
@@ -918,7 +918,26 @@
         window.signOutUser = () => { if(confirm("¿Cerrar sesión?")) signOut(auth); };
         window.showToast = (m) => { const t = document.getElementById('toast'); if(t){ t.innerText = m; t.classList.remove('opacity-0'); setTimeout(() => t.classList.add('opacity-0'), 3000); } };
         window.renderCart = () => { const c = document.getElementById('cart-items'); if(!c) return; if(cart.length === 0) c.innerHTML = '<div class="text-gray-500 text-center py-8 italic text-xs uppercase tracking-widest">Carrito vacío</div>'; else c.innerHTML = cart.map(i => `<div class="flex justify-between items-center bg-black/30 p-3 rounded-lg border border-gray-800"><div><p class="text-xs font-bold uppercase text-white">${i.name}</p><p class="text-[10px] text-gray-500">${i.brand || 'S/M'} | ${fmt(i.price)} x ${i.qty}</p></div><div class="flex items-center gap-3"><span class="font-bold accent-color text-sm">${fmt(i.price * i.qty)}</span><button onclick="window.removeFromCart('${i.id}')" class="text-red-400"><i data-lucide="x-circle" class="w-4 h-4"></i></button></div></div>`).join(''); document.getElementById('cart-total').innerText = fmt(cart.reduce((s, i) => s + (i.price * i.qty), 0)); document.getElementById('cart-count').innerText = cart.length; lucide.createIcons(); };
-        window.exportStock = (onlyFiltered) => { let data = onlyFiltered ? products.filter(p => (p.name && p.name.toLowerCase().includes(document.getElementById('stock-search').value.toLowerCase()))) : products; if(!data.length) return showToast("Sin datos"); let csv = "\uFEFFNombre,Marca,Modelo,Codigo,Stock,Precio\n"; data.forEach(p => csv += `"${p.name}","${p.brand}","${p.model}","${p.code}",${p.stock},${p.price}\n`); const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'Stock.csv'; a.click(); };
+        
+        window.exportStock = (onlyFiltered) => { 
+            let data = onlyFiltered ? products.filter(p => (p.name && p.name.toLowerCase().includes(document.getElementById('stock-search').value.toLowerCase())) || (p.brand && p.brand.toLowerCase().includes(document.getElementById('stock-search').value.toLowerCase())) || (p.model && p.model.toLowerCase().includes(document.getElementById('stock-search').value.toLowerCase()))) : products; 
+            if(!data.length) return showToast("Sin datos para exportar"); 
+            
+            // Cabecera CSV actualizada con Costo y Precio Final
+            let csv = "\uFEFFNombre,Marca,Modelo,Codigo,Stock,Costo,Precio Final\n"; 
+            data.forEach(p => {
+                csv += `"${p.name || ''}","${p.brand || ''}","${p.model || ''}","${p.code || ''}",${p.stock || 0},${p.cost || 0},${p.price || 0}\n`;
+            }); 
+            
+            const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); 
+            const url = URL.createObjectURL(blob); 
+            const a = document.createElement('a'); 
+            a.href = url; 
+            a.download = `Stock_${onlyFiltered ? 'Filtrado' : 'Completo'}_${new Date().toLocaleDateString()}.csv`; 
+            a.click(); 
+            URL.revokeObjectURL(url);
+        };
+
         window.viewLargeImage = (src) => { const v = document.getElementById('image-viewer'); const i = document.getElementById('enlarged-image'); if(v && i && src) { i.src = src; v.classList.remove('hidden'); v.classList.add('flex'); lucide.createIcons(); } };
         window.closeImageViewer = () => { const v = document.getElementById('image-viewer'); if(v) { v.classList.add('hidden'); v.classList.remove('flex'); } };
         window.removeFromCart = (id) => { cart = cart.filter(i => i.id !== id); window.renderCart(); };
@@ -927,7 +946,7 @@
         window.calculateStats = () => { const m = document.getElementById('accounting-month').value; const fs = historyRaw.filter(h => h.date && h.date.toDate().toISOString().slice(0,7) === m); const fe = expenses.filter(e => e.date && e.date.toDate().toISOString().slice(0,7) === m); document.getElementById('stat-sales').innerText = fmt(fs.reduce((s,h) => s + (h.amount || 0), 0)); document.getElementById('stat-expenses').innerText = fmt(fe.reduce((s,e) => s + (e.amount || 0), 0)); document.getElementById('stat-balance').innerText = fmt(fs.reduce((s,h) => s + (h.amount || 0), 0) - fe.reduce((s,e) => s + (e.amount || 0), 0)); };
         window.filterHistory = () => { const hl = document.getElementById('history-list'); if(!hl) return; let f = historyRaw.sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0)); if(!document.getElementById('hist-search').value) f = f.slice(0,10); hl.innerHTML = f.map(h => `<tr class="border-b border-gray-800 text-xs"><td class="p-4 text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleString() : 'Reciente'}</td><td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold border border-gray-700">${h.saleMode || 'N/A'}</span></td><td class="p-4 font-bold text-gray-300">${h.customerName || 'Mostrador'}</td><td class="p-4 text-gray-400 truncate">${h.detail}</td><td class="p-4 font-bold accent-color">${fmt(h.amount)}</td></tr>`).join(''); };
         window.editExpense = (e) => { document.getElementById('e-id').value = e.id; document.getElementById('e-concept').value = e.concept; document.getElementById('e-category').value = e.category; document.getElementById('e-amount').value = e.amount; window.openModal('modal-expense'); };
-        window.viewClientHistory = (id, name) => { const cs = historyRaw.filter(h => h.customerId === id); document.getElementById('client-history-name').innerText = `Compras de ${name}`; document.getElementById('client-history-content').innerHTML = cs.length ? cs.map(h => `<div class="mb-4 p-4 bg-black/30 rounded border border-gray-800"><div class="flex justify-between text-xs mb-1"><span class="text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleDateString() : 'Reciente'}</span><span class="font-bold uppercase text-amber-500">${h.saleMode}</span></div><p class="text-sm text-white">${h.detail}</p><p class="text-right font-bold mt-2 text-amber-500">${fmt(h.amount)}</p></div>`).join('') : '<p class="text-center italic text-gray-500">Sin compras registradas</p>'; window.openModal('modal-client-history'); };
+        window.viewClientHistory = (id, name) => { const cs = historyRaw.filter(h => h.customerId === id); document.getElementById('client-history-name').innerText = `Compras de ${name}`; document.getElementById('client-history-content').innerHTML = clientSales.length ? clientSales.map(h => `<div class="mb-4 p-4 bg-black/30 rounded border border-gray-800"><div class="flex justify-between text-xs mb-1"><span class="text-gray-500">${h.date?.toDate ? h.date.toDate().toLocaleDateString() : 'Reciente'}</span><span class="font-bold uppercase text-amber-500">${h.saleMode}</span></div><p class="text-sm text-white">${h.detail}</p><p class="text-right font-bold mt-2 text-amber-500">${fmt(h.amount)}</p></div>`).join('') : '<p class="text-center italic text-gray-500">Sin compras registradas</p>'; window.openModal('modal-client-history'); };
 
         window.addEventListener('load', startApp);
     </script>
