@@ -185,6 +185,7 @@
                                 <input type="text" id="sale-customer-search" placeholder="Escribe nombre para buscar..." class="w-full p-2 text-sm rounded outline-none" oninput="suggestCustomers(this.value)">
                                 <div id="customer-suggestions" class="bg-gray-800 rounded mt-1 hidden max-h-40 overflow-y-auto border border-gray-700"></div>
                             </div>
+                            <!-- Campos para nuevo cliente extendidos -->
                             <div id="new-customer-fields" class="space-y-2 hidden border-l-2 border-amber-500 pl-3 pt-2">
                                 <p class="text-[10px] text-amber-500 font-bold uppercase italic">Registrar Nuevo Cliente:</p>
                                 <div class="grid grid-cols-2 gap-2">
@@ -434,20 +435,22 @@
                 };
             }
 
-            // Buscador Herramientas en Ventas
+            // --- Búsqueda en Ventas ---
             const sInp = document.getElementById('search-product');
             if (sInp) {
                 sInp.addEventListener('input', () => {
                     const t = sInp.value.toLowerCase();
                     const r = document.getElementById('search-results');
                     if(!t) { r.innerHTML = ''; return; }
+                    
                     const f = products.filter(p => 
                         (p.name && p.name.toLowerCase().includes(t)) || 
                         (p.brand && p.brand.toLowerCase().includes(t)) || 
                         (p.code && p.code.toLowerCase().includes(t))
                     );
+                    
                     r.innerHTML = f.slice(0,5).map(p => `
-                        <div onclick='addToCartById("${p.id}")' class="flex items-center justify-between p-3 bg-white/5 hover:bg-amber-500/10 rounded-lg cursor-pointer transition-all border border-transparent hover:border-amber-500/20">
+                        <div onclick='window.addToCartById("${p.id}")' class="flex items-center justify-between p-3 bg-white/5 hover:bg-amber-500/10 rounded-lg cursor-pointer transition-all border border-transparent hover:border-amber-500/20">
                             <div class="flex items-center gap-3">
                                 <img src="${p.image || ''}" class="w-10 h-10 rounded object-cover" onerror="this.src='https://via.placeholder.com/40'">
                                 <div><p class="font-bold text-sm text-white">${p.name}</p><p class="text-[10px] text-gray-500 uppercase">${p.brand || 'S/M'} | STOCK: ${p.stock}</p></div>
@@ -457,7 +460,7 @@
                 });
             }
 
-            // Vinculación segura de formularios
+            // Vincular formularios existentes de forma segura
             const fProd = document.getElementById('form-product'); if(fProd) fProd.onsubmit = handleProductSubmit;
             const fSupp = document.getElementById('form-supplier'); if(fSupp) fSupp.onsubmit = handleSupplierSubmit;
             const fExp = document.getElementById('form-expense'); if(fExp) fExp.onsubmit = handleExpenseSubmit;
@@ -480,6 +483,7 @@
             const sl = document.getElementById('stock-list'); if(!sl) return;
             const searchEl = document.getElementById('stock-search');
             const search = searchEl ? searchEl.value.toLowerCase() : "";
+            
             let filtered = search ? 
                 products.filter(p => p.name.toLowerCase().includes(search) || (p.brand && p.brand.toLowerCase().includes(search)) || (p.code && p.code.toLowerCase().includes(search))) :
                 [...products].sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 20);
@@ -492,8 +496,8 @@
                     <td class="p-4 font-bold text-xs ${p.stock < 5 ? 'text-red-500' : 'text-green-500'}">${p.stock} UN</td>
                     <td class="p-4 font-bold text-sm accent-color">${fmt(p.price)}</td>
                     <td class="p-4 flex gap-2">
-                        <button onclick='editProduct(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-amber-500 hover:scale-110 transition-transform"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                        <button onclick="deleteProduct('${p.id}')" class="text-red-400 hover:scale-110 transition-transform"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <button onclick='window.editProduct(${JSON.stringify(p).replace(/'/g, "&apos;")})' class="text-amber-500 hover:scale-110 transition-transform"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                        <button onclick="window.deleteProduct('${p.id}')" class="text-red-400 hover:scale-110 transition-transform"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </td>
                 </tr>`).join('');
             lucide.createIcons();
@@ -503,13 +507,17 @@
             const spl = document.getElementById('supplier-list'); if(!spl) return;
             const searchEl = document.getElementById('supplier-search');
             const search = searchEl ? searchEl.value.toLowerCase() : "";
-            const filtered = suppliers.filter(s => (s.name && s.name.toLowerCase().includes(search)) || (s.city && s.city.toLowerCase().includes(search)));
+
+            const filtered = suppliers.filter(s => 
+                (s.name && s.name.toLowerCase().includes(search)) || 
+                (s.city && s.city.toLowerCase().includes(search))
+            );
 
             spl.innerHTML = filtered.map(s => `
                 <div class="bg-card p-6 rounded-xl border border-gray-800 relative group">
                     <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick='editSupplier(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                        <button onclick="deleteSupplier('${s.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <button onclick='window.editSupplier(${JSON.stringify(s).replace(/'/g, "&apos;")})' class="text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                        <button onclick="window.deleteSupplier('${s.id}')" class="text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                     <h4 class="text-lg font-bold mb-2 text-white">${s.name}</h4>
                     <div class="space-y-1 text-xs text-gray-400">
@@ -530,8 +538,8 @@
             if (cl) cl.innerHTML = filtered.map(c => `
                 <div class="bg-card p-6 rounded-xl border border-gray-800 relative group">
                     <div class="absolute top-4 right-4 flex gap-2">
-                        <button onclick='editCustomerById("${c.id}")' class="text-gray-400 hover:text-amber-500"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                        <button onclick="viewClientHistory('${c.id}', '${c.name} ${c.surname || ''}')" class="text-amber-500"><i data-lucide="history" class="w-5 h-5"></i></button>
+                        <button onclick='window.editCustomerById("${c.id}")' class="text-gray-400 hover:text-amber-500"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                        <button onclick="window.viewClientHistory('${c.id}', '${c.name} ${c.surname || ''}')" class="text-amber-500"><i data-lucide="history" class="w-5 h-5"></i></button>
                     </div>
                     <h4 class="text-lg font-bold mb-1 text-white">${c.name} ${c.surname || ''}</h4>
                     <div class="text-xs text-gray-400 space-y-1">
@@ -554,8 +562,8 @@
                     <td class="p-4"><span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-gray-400 uppercase">${e.category}</span></td>
                     <td class="p-4 font-bold text-red-400">${fmt(e.amount)}</td>
                     <td class="p-4 flex gap-2">
-                        <button onclick='editExpense(${JSON.stringify(e).replace(/'/g, "&apos;")})' class="text-gray-500 hover:text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                        <button onclick="deleteExpense('${e.id}')" class="text-gray-500 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <button onclick='window.editExpense(${JSON.stringify(e).replace(/'/g, "&apos;")})' class="text-gray-500 hover:text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                        <button onclick="window.deleteExpense('${e.id}')" class="text-gray-500 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </td>
                 </tr>`).join('');
             lucide.createIcons();
@@ -587,6 +595,7 @@
         async function handleClientEditSubmit(e) {
             e.preventDefault();
             const id = document.getElementById('edit-c-id').value;
+            if(!id) return;
             const data = {
                 name: document.getElementById('edit-c-name').value,
                 surname: document.getElementById('edit-c-surname').value,
@@ -594,9 +603,11 @@
                 email: document.getElementById('edit-c-email').value,
                 updatedAt: serverTimestamp()
             };
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'customers', id), data);
-            closeModal('modal-client');
-            showToast("Cliente actualizado");
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'customers', id), data);
+                closeModal('modal-client');
+                showToast("Cliente actualizado");
+            } catch(err) { showToast("Error al actualizar"); }
         }
 
         // --- MANEJO DE FORMULARIOS ---
@@ -607,11 +618,13 @@
                 name: document.getElementById('p-name').value, brand: document.getElementById('p-brand').value,
                 code: document.getElementById('p-code').value, supplierId: document.getElementById('p-supplier').value,
                 stock: parseInt(document.getElementById('p-stock').value), cost: parseFloat(document.getElementById('p-cost').value),
-                price: parseFloat(document.getElementById('p-price').value), image: document.getElementById('p-image-data').value, updatedAt: serverTimestamp(),
-                createdAt: id ? undefined : serverTimestamp()
+                price: parseFloat(document.getElementById('p-price').value), image: document.getElementById('p-image-data').value, updatedAt: serverTimestamp()
             };
             if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), data);
-            else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), data);
+            else {
+                data.createdAt = serverTimestamp();
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), data);
+            }
             closeModal('modal-product'); showToast("Producto guardado");
         }
 
@@ -641,12 +654,8 @@
             saleType = t; 
             const bP = document.getElementById('btn-presencial'); 
             const bO = document.getElementById('btn-online'); 
-            if(bP) {
-                bP.className = t === 'presencial' ? 'py-2 rounded border border-amber-500 bg-amber-500/10 text-amber-500 font-bold text-xs' : 'py-2 rounded border border-gray-700 text-white text-xs';
-            }
-            if(bO) {
-                bO.className = t === 'online' ? 'py-2 rounded border border-amber-500 bg-amber-500/10 text-amber-500 font-bold text-xs' : 'py-2 rounded border border-gray-700 text-white text-xs';
-            }
+            if(bP) bP.className = t === 'presencial' ? 'py-2 rounded border border-amber-500 bg-amber-500/10 text-amber-500 font-bold text-xs' : 'py-2 rounded border border-gray-700 text-white text-xs';
+            if(bO) bO.className = t === 'online' ? 'py-2 rounded border border-amber-500 bg-amber-500/10 text-amber-500 font-bold text-xs' : 'py-2 rounded border border-gray-700 text-white text-xs';
         };
 
         window.suggestCustomers = (term) => {
@@ -655,7 +664,7 @@
             if(!term) { sug.classList.add('hidden'); fields.classList.add('hidden'); return; }
             const matches = customers.filter(c => (c.name && c.name.toLowerCase().includes(term.toLowerCase())) || (c.surname && c.surname.toLowerCase().includes(term.toLowerCase())) || (c.phone && c.phone.includes(term)));
             if(matches.length > 0) {
-                sug.innerHTML = matches.map(c => `<div onclick="selectCustomer('${c.id}', '${c.name}', '${c.surname || ''}')" class="p-2 hover:bg-amber-500/20 cursor-pointer text-xs border-b border-gray-700 font-bold">${c.name} ${c.surname || ''} (${c.phone || 'S/T'})</div>`).join('');
+                sug.innerHTML = matches.map(c => `<div onclick="window.selectCustomer('${c.id}', '${c.name}', '${c.surname || ''}')" class="p-2 hover:bg-amber-500/20 cursor-pointer text-xs border-b border-gray-700 font-bold">${c.name} ${c.surname || ''} (${c.phone || 'S/T'})</div>`).join('');
                 sug.classList.remove('hidden'); fields.classList.add('hidden'); selectedCustomerId = null; 
             } else {
                 sug.classList.add('hidden'); fields.classList.remove('hidden'); selectedCustomerId = null;
@@ -710,6 +719,17 @@
             } catch(e) { showToast("Error al procesar"); }
         };
 
+        function generateInvoice(items, total, customer) {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            doc.setFillColor(30, 30, 30); doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(245, 158, 11); doc.setFontSize(22); doc.text("HERRAMIENTAS LIBRES", 15, 25);
+            doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.text("Comprobante de Venta", 15, 32);
+            doc.text(`Cliente: ${customer}`, 150, 25); doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 150, 32);
+            doc.autoTable({ startY: 50, head: [['Producto', 'Marca', 'Cant.', 'Unitario', 'Subtotal']], body: items.map(i => [i.name, i.brand || 'S/M', i.qty, fmt(i.price), fmt(i.price * i.qty)]), theme: 'grid', headStyles: { fillColor: [245, 158, 11], textColor: [0, 0, 0] } });
+            doc.setTextColor(0, 0, 0); doc.setFontSize(14); doc.text(`TOTAL: ${fmt(total)}`, 140, doc.lastAutoTable.finalY + 15);
+            doc.save(`Venta_${customer.replace(/\s+/g, '_')}.pdf`);
+        }
+
         // --- HELPERS NAVEGACIÓN ---
         window.switchTab = (id) => {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
@@ -760,7 +780,7 @@
             document.getElementById('p-cost').value = p.cost; document.getElementById('p-price').value = p.price;
             document.getElementById('p-image-data').value = p.image || ''; 
             const pc = document.getElementById('image-preview-container'); if(pc) pc.innerHTML = p.image ? `<img src="${p.image}" class="w-full h-full object-cover">` : '';
-            openModal('modal-product');
+            window.openModal('modal-product');
         };
 
         window.editSupplier = (s) => {
@@ -768,7 +788,7 @@
             document.getElementById('s-whatsapp').value = s.whatsapp; document.getElementById('s-phone').value = s.phone;
             document.getElementById('s-email').value = s.email; document.getElementById('s-address').value = s.address;
             document.getElementById('s-city').value = s.city; document.getElementById('s-country').value = s.country;
-            openModal('modal-supplier');
+            window.openModal('modal-supplier');
         };
 
         window.deleteProduct = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id)); };
