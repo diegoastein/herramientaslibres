@@ -198,9 +198,10 @@
                         <div class="grid grid-cols-1 gap-3">
                             <div>
                                 <label class="block text-[10px] text-gray-500 uppercase font-bold">Cliente (Busca o Registra)</label>
-                                <input type="text" id="sale-customer-search" placeholder="Escribe nombre para buscar..." class="w-full p-2 text-sm rounded outline-none" oninput="suggestCustomers(this.value)">
+                                <input type="text" id="sale-customer-search" placeholder="Escribe nombre para buscar..." class="w-full p-2 text-sm rounded outline-none" oninput="window.suggestCustomers(this.value)">
                                 <div id="customer-suggestions" class="bg-gray-800 rounded mt-1 hidden max-h-40 overflow-y-auto border border-gray-700"></div>
                             </div>
+                            <!-- Campos para nuevo cliente extendidos -->
                             <div id="new-customer-fields" class="space-y-2 hidden border-l-2 border-amber-500 pl-3 pt-2">
                                 <p class="text-[10px] text-amber-500 font-bold uppercase italic">Registrar Nuevo Cliente:</p>
                                 <div class="grid grid-cols-2 gap-2">
@@ -215,7 +216,7 @@
                         </div>
                         <div class="flex justify-between text-2xl font-bold text-white pt-2"><span>Total</span><span id="cart-total">$ 0,00</span></div>
                     </div>
-                    <button onclick="processSale()" class="btn-primary w-full mt-6 py-4 rounded-lg flex items-center justify-center gap-2">
+                    <button onclick="window.processSale()" class="btn-primary w-full mt-6 py-4 rounded-lg flex items-center justify-center gap-2">
                         <i data-lucide="check-square" class="w-5 h-5"></i> Finalizar Venta
                     </button>
                 </div>
@@ -259,6 +260,7 @@
 
         <!-- SECCIÓN: CONTABILIDAD -->
         <section id="sec-contabilidad" class="tab-content hidden">
+            <!-- Filtro Mensual -->
             <div class="flex items-center gap-4 mb-6 bg-card p-4 rounded-xl border border-gray-800">
                 <label class="text-xs text-gray-500 uppercase font-bold">Ver mes:</label>
                 <input type="month" id="accounting-month" class="p-2 rounded outline-none text-sm" onchange="window.calculateStats(); window.renderExpenses();">
@@ -295,6 +297,10 @@
 
     </main>
 
+    <!-- MODALES -->
+    <datalist id="list-product-names"></datalist>
+    <datalist id="list-brands"></datalist>
+
     <!-- MODAL PRODUCTO -->
     <div id="modal-product" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
         <div class="bg-card w-full max-w-2xl rounded-2xl border border-gray-700 overflow-hidden max-h-[90vh] modal-scroll">
@@ -317,7 +323,7 @@
                     <div class="flex items-center gap-4">
                         <label class="flex-1 cursor-pointer bg-gray-700 p-2 rounded text-center text-xs hover:bg-gray-600 transition-colors">
                             <i data-lucide="camera" class="inline w-4 h-4 mr-1"></i> Foto o Cámara
-                            <input type="file" id="p-file-input" accept="image/*" capture="environment" class="hidden" onchange="handleImageUpload(event)">
+                            <input type="file" id="p-file-input" accept="image/*" capture="environment" class="hidden" onchange="window.handleImageUpload(event)">
                         </label>
                         <div id="image-preview-container" class="w-12 h-12 bg-black rounded border border-gray-700 flex items-center justify-center overflow-hidden"></div>
                     </div>
@@ -480,19 +486,21 @@
                 };
             }
 
-            // Búsqueda en Ventas
+            // --- Búsqueda en Ventas ---
             const sInp = document.getElementById('search-product');
             if (sInp) {
                 sInp.addEventListener('input', () => {
                     const t = sInp.value.toLowerCase();
                     const r = document.getElementById('search-results');
                     if(!t) { r.innerHTML = ''; return; }
+                    
                     const f = products.filter(p => 
                         (p.name && p.name.toLowerCase().includes(t)) || 
                         (p.brand && p.brand.toLowerCase().includes(t)) || 
                         (p.model && p.model.toLowerCase().includes(t)) ||
                         (p.code && p.code.toLowerCase().includes(t))
                     );
+                    
                     r.innerHTML = f.slice(0,5).map(p => `
                         <div onclick="window.addToCartById('${p.id}')" class="flex items-center justify-between p-3 bg-white/5 hover:bg-amber-500/10 rounded-lg cursor-pointer border border-transparent hover:border-amber-500/20">
                             <div class="flex items-center gap-3">
@@ -531,6 +539,7 @@
             const sl = document.getElementById('stock-list'); if(!sl) return;
             const searchEl = document.getElementById('stock-search');
             const search = searchEl ? searchEl.value.toLowerCase() : "";
+            
             let filtered = search ? 
                 products.filter(p => (p.name && p.name.toLowerCase().includes(search)) || (p.brand && p.brand.toLowerCase().includes(search)) || (p.code && p.code.toLowerCase().includes(search))) :
                 [...products].sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 20);
@@ -555,7 +564,12 @@
             const spl = document.getElementById('supplier-list'); if(!spl) return;
             const searchEl = document.getElementById('supplier-search');
             const search = searchEl ? searchEl.value.toLowerCase() : "";
-            const filtered = suppliers.filter(s => (s.name && s.name.toLowerCase().includes(search)) || (s.city && s.city.toLowerCase().includes(search)));
+
+            const filtered = suppliers.filter(s => 
+                (s.name && s.name.toLowerCase().includes(search)) || 
+                (s.city && s.city.toLowerCase().includes(search))
+            );
+
             spl.innerHTML = filtered.map(s => `
                 <div class="bg-card p-6 rounded-xl border border-gray-800 relative group">
                     <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -576,6 +590,7 @@
             const term = el.value.toLowerCase();
             let filtered = customers.filter(c => (c.name && c.name.toLowerCase().includes(term)) || (c.surname && c.surname.toLowerCase().includes(term)));
             if (!term) filtered = filtered.slice(0, 10);
+
             const cl = document.getElementById('customer-list');
             if (cl) cl.innerHTML = filtered.map(c => `
                 <div class="bg-card p-6 rounded-xl border border-gray-800 relative group">
@@ -604,11 +619,22 @@
                     <td class="p-4"><span class="text-[10px] bg-gray-800 px-2 py-0.5 rounded text-gray-400 uppercase">${e.category}</span></td>
                     <td class="p-4 font-bold text-red-400">${fmt(e.amount)}</td>
                     <td class="p-4 flex gap-2">
-                        <button onclick='window.editExpense(${JSON.stringify(e).replace(/'/g, "&apos;")})' class="text-gray-500 hover:text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                        <button onclick='editExpense(${JSON.stringify(e).replace(/'/g, "&apos;")})' class="text-gray-500 hover:text-amber-500"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
                         <button onclick="window.deleteExpense('${e.id}')" class="text-gray-500 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </td>
                 </tr>`).join('');
             lucide.createIcons();
+        };
+
+        window.calculateStats = () => {
+            const selectedMonth = document.getElementById('accounting-month').value;
+            const fSales = historyRaw.filter(h => h.date && h.date.toDate().toISOString().slice(0, 7) === selectedMonth);
+            const fExpenses = expenses.filter(e => e.date && e.date.toDate().toISOString().slice(0, 7) === selectedMonth);
+            const totalS = fSales.reduce((s, h) => s + (h.amount || 0), 0);
+            const totalE = fExpenses.reduce((s, e) => s + (e.amount || 0), 0);
+            document.getElementById('stat-sales').innerText = fmt(totalS);
+            document.getElementById('stat-expenses').innerText = fmt(totalE);
+            document.getElementById('stat-balance').innerText = fmt(totalS - totalE);
         };
 
         // --- MANEJO DE CLIENTES ---
@@ -627,8 +653,18 @@
             e.preventDefault();
             const id = document.getElementById('edit-c-id').value;
             if(!id) return;
-            const data = { name: document.getElementById('edit-c-name').value, surname: document.getElementById('edit-c-surname').value, phone: document.getElementById('edit-c-phone').value, email: document.getElementById('edit-c-email').value, updatedAt: serverTimestamp() };
-            try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'customers', id), data); closeModal('modal-client'); showToast("Cliente actualizado"); } catch(err) { showToast("Error al actualizar"); }
+            const data = {
+                name: document.getElementById('edit-c-name').value,
+                surname: document.getElementById('edit-c-surname').value,
+                phone: document.getElementById('edit-c-phone').value,
+                email: document.getElementById('edit-c-email').value,
+                updatedAt: serverTimestamp()
+            };
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'customers', id), data);
+                closeModal('modal-client');
+                showToast("Cliente actualizado");
+            } catch(err) { showToast("Error al actualizar"); }
         }
 
         // --- MANEJO DE FORMULARIOS ---
@@ -642,14 +678,20 @@
                 price: parseFloat(document.getElementById('p-price').value), image: document.getElementById('p-image-data').value, updatedAt: serverTimestamp()
             };
             if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), data);
-            else { data.createdAt = serverTimestamp(); await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), data); }
+            else {
+                data.createdAt = serverTimestamp();
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'products'), data);
+            }
             closeModal('modal-product'); showToast("Producto guardado");
         }
 
         async function handleSupplierSubmit(e) {
             e.preventDefault();
             const id = document.getElementById('s-id').value;
-            const data = { name: document.getElementById('s-name').value, whatsapp: document.getElementById('s-whatsapp').value, phone: document.getElementById('s-phone').value, email: document.getElementById('s-email').value, address: document.getElementById('s-address').value, city: document.getElementById('s-city').value, country: document.getElementById('s-country').value, updatedAt: serverTimestamp() };
+            const data = {
+                name: document.getElementById('s-name').value, whatsapp: document.getElementById('s-whatsapp').value, phone: document.getElementById('s-phone').value, email: document.getElementById('s-email').value,
+                address: document.getElementById('s-address').value, city: document.getElementById('s-city').value, country: document.getElementById('s-country').value, updatedAt: serverTimestamp()
+            };
             if(id) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'suppliers', id), data);
             else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'suppliers'), { ...data, createdAt: serverTimestamp() });
             closeModal('modal-supplier'); showToast("Proveedor guardado");
@@ -667,19 +709,69 @@
         // --- VENTAS ---
         window.setSaleType = (t) => { 
             saleType = t; 
-            const bP = document.getElementById('btn-presencial'); const bO = document.getElementById('btn-online'); 
+            const bP = document.getElementById('btn-presencial'); 
+            const bO = document.getElementById('btn-online'); 
             if(bP) bP.className = t === 'presencial' ? 'py-2 rounded border border-amber-500 bg-amber-500/10 text-amber-500 font-bold text-xs' : 'py-2 rounded border border-gray-700 text-white text-xs';
             if(bO) bO.className = t === 'online' ? 'py-2 rounded border border-amber-500 bg-amber-500/10 text-amber-500 font-bold text-xs' : 'py-2 rounded border border-gray-700 text-white text-xs';
+        };
+
+        window.suggestCustomers = (term) => {
+            const sug = document.getElementById('customer-suggestions');
+            const fields = document.getElementById('new-customer-fields');
+            
+            // Siempre limpiar selección previa al escribir
+            selectedCustomerId = null;
+            fields.classList.add('hidden');
+
+            if(!term) { sug.classList.add('hidden'); return; }
+            
+            const matches = customers.filter(c => (c.name && c.name.toLowerCase().includes(term.toLowerCase())) || (c.surname && c.surname.toLowerCase().includes(term.toLowerCase())) || (c.phone && c.phone.includes(term)));
+            
+            let html = matches.map(c => `
+                <div onclick="window.selectCustomer('${c.id}', '${c.name}', '${c.surname || ''}')" class="p-3 hover:bg-amber-500/20 cursor-pointer text-xs border-b border-gray-700 font-bold text-white">
+                    ${c.name} ${c.surname || ''} (${c.phone || 'S/T'})
+                </div>`).join('');
+            
+            // Opción de agregar nuevo cliente siempre disponible si no hay un match exacto
+            html += `<div onclick="window.showNewCustomerFields('${term}')" class="p-3 hover:bg-green-500/20 cursor-pointer text-xs font-bold text-green-500 italic">
+                + Registrar "${term}" como nuevo cliente
+            </div>`;
+
+            sug.innerHTML = html;
+            sug.classList.remove('hidden');
+        };
+
+        window.showNewCustomerFields = (term) => {
+            selectedCustomerId = null;
+            document.getElementById('customer-suggestions').classList.add('hidden');
+            document.getElementById('new-customer-fields').classList.remove('hidden');
+            const nameInp = document.getElementById('c-name');
+            if(nameInp) nameInp.value = term;
+        };
+
+        window.selectCustomer = (id, name, surname) => {
+            selectedCustomerId = id;
+            document.getElementById('sale-customer-search').value = `${name} ${surname}`;
+            document.getElementById('customer-suggestions').classList.add('hidden');
+            document.getElementById('new-customer-fields').classList.add('hidden');
         };
 
         window.addToCartById = (id) => {
             const p = products.find(x => x.id === id);
             if(!p) return;
             const it = cart.find(i => i.id === p.id);
-            if(it) { if(it.qty < p.stock) it.qty++; else showToast("Stock insuficiente"); }
-            else { if(p.stock > 0) cart.push({ ...p, qty: 1 }); else showToast("Sin stock"); }
-            const sInp = document.getElementById('search-product'); if(sInp) sInp.value = '';
-            const sRes = document.getElementById('search-results'); if(sRes) sRes.innerHTML = '';
+            if(it) { 
+                if(it.qty < p.stock) it.qty++; 
+                else showToast("Stock insuficiente"); 
+            }
+            else { 
+                if(p.stock > 0) cart.push({ ...p, qty: 1 }); 
+                else showToast("Sin stock"); 
+            }
+            const sInp = document.getElementById('search-product');
+            if(sInp) sInp.value = ''; 
+            const sRes = document.getElementById('search-results');
+            if(sRes) sRes.innerHTML = ''; 
             window.renderCart();
         };
 
@@ -687,25 +779,57 @@
             if(!db || !auth.currentUser) return showToast("Sin conexión");
             if(cart.length === 0) return showToast("Carrito vacío");
             const searchVal = document.getElementById('sale-customer-search').value.trim();
-            if(!searchVal) return showToast("Identifique al cliente");
+            if(!searchVal && !selectedCustomerId) return showToast("Identifique al cliente");
+
             try {
                 let customerId = selectedCustomerId;
                 let customerFullName = searchVal;
+
+                // Crear cliente si no existe
                 if(!customerId) {
                     const fn = document.getElementById('c-name').value.trim();
                     const ln = document.getElementById('c-surname').value.trim();
+                    const ph = document.getElementById('c-phone').value.trim();
+                    const em = document.getElementById('c-email').value.trim();
                     if(!fn || !ln) return showToast("Faltan datos del cliente");
-                    const newC = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'customers'), { name: fn, surname: ln, phone: document.getElementById('c-phone').value, email: document.getElementById('c-email').value, createdAt: serverTimestamp() });
-                    customerId = newC.id; customerFullName = `${fn} ${ln}`;
+                    
+                    const newC = await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'customers'), { 
+                        name: fn, 
+                        surname: ln, 
+                        phone: ph, 
+                        email: em, 
+                        createdAt: serverTimestamp() 
+                    });
+                    customerId = newC.id; 
+                    customerFullName = `${fn} ${ln}`;
                 }
-                for(const it of cart) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', it.id), { stock: increment(-it.qty) }); }
-                const saleData = { type: 'venta', saleMode: saleType, customerId, customerName: customerFullName, detail: cart.map(i => `${i.qty}x ${i.name} [${i.brand}]`).join(', '), amount: cart.reduce((s, i) => s + (i.price * i.qty), 0), items: [...cart], date: serverTimestamp() };
+
+                // Descontar Stock
+                for(const it of cart) { 
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', it.id), { stock: increment(-it.qty) }); 
+                }
+
+                // Guardar Historial
+                const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+                const saleData = { 
+                    type: 'venta', 
+                    saleMode: saleType, 
+                    customerId, 
+                    customerName: customerFullName, 
+                    detail: cart.map(i => `${i.qty}x ${i.name} [${i.brand}]`).join(', '), 
+                    amount: total, 
+                    items: [...cart], 
+                    date: serverTimestamp() 
+                };
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'history'), saleData);
-                currentInvoiceData = { items: [...cart], total: saleData.amount, customer: customerFullName };
+
+                // Configurar post-venta
+                currentInvoiceData = { items: [...cart], total: total, customer: customerFullName };
                 cart = []; window.renderCart();
                 document.getElementById('sale-customer-search').value = '';
+                document.getElementById('new-customer-fields').classList.add('hidden');
                 openModal('modal-success-sale');
-            } catch(e) { showToast("Error al procesar"); }
+            } catch(e) { console.error(e); showToast("Error al procesar la venta"); }
         };
 
         window.handleInvoiceDownload = () => { if(currentInvoiceData) window.generateInvoice(currentInvoiceData.items, currentInvoiceData.total, currentInvoiceData.customer, true); };
@@ -715,7 +839,7 @@
             if (navigator.share) {
                 const file = new File([pdfBlob], `Factura_${currentInvoiceData.customer.replace(/\s+/g, '_')}.pdf`, { type: 'application/pdf' });
                 try { await navigator.share({ files: [file], title: 'Factura Herramientas Libres' }); } catch (err) {}
-            } else { showToast("Compartir no disponible"); }
+            } else { showToast("Compartir no disponible en este equipo"); }
         };
 
         window.generateInvoice = (items, total, customer, download = true) => {
@@ -724,7 +848,13 @@
             doc.setTextColor(245, 158, 11); doc.setFontSize(22); doc.text("HERRAMIENTAS LIBRES", 15, 25);
             doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.text("Comprobante de Venta", 15, 32);
             doc.text(`Cliente: ${customer}`, 150, 25); doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 150, 32);
-            doc.autoTable({ startY: 50, head: [['Producto', 'Marca', 'Modelo', 'Cant.', 'Unitario', 'Subtotal']], body: items.map(i => [i.name, i.brand || '-', i.model || '-', i.qty, fmt(i.price), fmt(i.price * i.qty)]), theme: 'grid', headStyles: { fillColor: [245, 158, 11], textColor: [0, 0, 0] } });
+            doc.autoTable({ 
+                startY: 50, 
+                head: [['Producto', 'Marca', 'Modelo', 'Cant.', 'Unitario', 'Subtotal']], 
+                body: items.map(i => [i.name, i.brand || '-', i.model || '-', i.qty, fmt(i.price), fmt(i.price * i.qty)]), 
+                theme: 'grid', 
+                headStyles: { fillColor: [245, 158, 11], textColor: [0, 0, 0] } 
+            });
             const finalY = doc.lastAutoTable.finalY + 15;
             doc.setTextColor(0, 0, 0); doc.setFontSize(14); doc.text(`TOTAL: ${fmt(total)}`, 140, finalY);
             doc.setFontSize(8); doc.setTextColor(100, 100, 100);
@@ -735,12 +865,51 @@
             else return doc.output('blob');
         };
 
-        // --- HELPERS GENERALES ---
-        window.switchTab = (id) => { document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden')); const target = document.getElementById(`sec-${id}`); if (target) target.classList.remove('hidden'); document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('tab-active')); const tabBtn = document.getElementById(`tab-${id}`); if(tabBtn) tabBtn.classList.add('tab-active'); lucide.createIcons(); };
+        // --- HELPERS NAVEGACIÓN ---
+        window.switchTab = (id) => { 
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden')); 
+            const target = document.getElementById(`sec-${id}`); 
+            if (target) target.classList.remove('hidden'); 
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('tab-active')); 
+            const tabBtn = document.getElementById(`tab-${id}`); 
+            if(tabBtn) tabBtn.classList.add('tab-active'); 
+            lucide.createIcons(); 
+        };
+        
         window.openModal = (id) => { const el = document.getElementById(id); if (el) { el.classList.remove('hidden'); el.classList.add('flex'); lucide.createIcons(); } };
-        window.prepareNew = (id) => { const el = document.getElementById(id); if (el) { const form = el.querySelector('form'); if(form) form.reset(); const hid = el.querySelector('input[type="hidden"]'); if(hid) hid.value = ''; const picC = document.getElementById('image-preview-container'); if (picC && id === 'modal-product') picC.innerHTML = ''; window.openModal(id); } };
+        
+        window.prepareNew = (id) => { 
+            const el = document.getElementById(id); 
+            if (el) { 
+                const form = el.querySelector('form'); if(form) form.reset(); 
+                const hid = el.querySelector('input[type="hidden"]'); if(hid) hid.value = ''; 
+                const picC = document.getElementById('image-preview-container'); if (picC && id === 'modal-product') picC.innerHTML = ''; 
+                window.openModal(id); 
+            } 
+        };
+        
         window.closeModal = (id) => { const el = document.getElementById(id); if (el) { el.classList.add('hidden'); el.classList.remove('flex'); } };
-        window.handleImageUpload = (e) => { const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = (ev) => { const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); const w = 300; const s = w / i.width; c.width = w; c.height = i.height * s; const ctx = c.getContext('2d'); ctx.drawImage(i, 0, 0, c.width, c.height); const b = c.toDataURL('image/jpeg', 0.7); document.getElementById('p-image-data').value = b; const pc = document.getElementById('image-preview-container'); if (pc) pc.innerHTML = `<img src="${b}" class="w-full h-full object-cover">`; }; i.src = ev.target.result; }; r.readAsDataURL(f); };
+        
+        window.handleImageUpload = (e) => { 
+            const f = e.target.files[0]; if(!f) return; 
+            const r = new FileReader(); 
+            r.onload = (ev) => { 
+                const i = new Image(); 
+                i.onload = () => { 
+                    const c = document.createElement('canvas'); 
+                    const w = 300; const s = w / i.width; 
+                    c.width = w; c.height = i.height * s; 
+                    const ctx = c.getContext('2d'); 
+                    ctx.drawImage(i, 0, 0, c.width, c.height); 
+                    const b = c.toDataURL('image/jpeg', 0.7); 
+                    document.getElementById('p-image-data').value = b; 
+                    const pc = document.getElementById('image-preview-container'); if (pc) pc.innerHTML = `<img src="${b}" class="w-full h-full object-cover">`; 
+                }; 
+                i.src = ev.target.result; 
+            }; 
+            r.readAsDataURL(f); 
+        };
+
         window.editProduct = (p) => { document.getElementById('p-id').value = p.id; document.getElementById('p-name').value = p.name; document.getElementById('p-brand').value = p.brand; document.getElementById('p-model').value = p.model || ''; document.getElementById('p-code').value = p.code; document.getElementById('p-supplier').value = p.supplierId || ''; document.getElementById('p-stock').value = p.stock; document.getElementById('p-cost').value = p.cost; document.getElementById('p-price').value = p.price; document.getElementById('p-image-data').value = p.image || ''; const pc = document.getElementById('image-preview-container'); if(pc) pc.innerHTML = p.image ? `<img src="${p.image}" class="w-full h-full object-cover">` : ''; window.openModal('modal-product'); };
         window.editSupplier = (s) => { document.getElementById('s-id').value = s.id; document.getElementById('s-name').value = s.name; document.getElementById('s-whatsapp').value = s.whatsapp; document.getElementById('s-phone').value = s.phone; document.getElementById('s-email').value = s.email; document.getElementById('s-address').value = s.address; document.getElementById('s-city').value = s.city; document.getElementById('s-country').value = s.country; window.openModal('modal-supplier'); };
         window.deleteProduct = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id)); };
